@@ -737,8 +737,8 @@ function StoryCard({
   onDone: () => void;
 }) {
   const s = steps[index];
-  // Motion takes ~2 s; then enough time to read the caption.
-  const ms = 2600 + (s.title.length + s.body.length) * 32;
+  // Motion takes ~1 s; then just enough time to read the caption.
+  const ms = 1800 + (s.title.length + s.body.length) * 18;
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") onGo(Math.min(index + 1, steps.length - 1));
@@ -1117,7 +1117,7 @@ function sentence(shape: Shape, metric: Metric): string | undefined {
     case "ornato":
       return `${de100(v)} de cada 100 soles de sus obras 2024 fueron para plazas, parques, arcos o monumentos.`;
     case "digital":
-      return `Su municipalidad saca ${v} de 100 en servicios digitales.`;
+      return `Su municipalidad tiene ${v} puntos de 100 en servicios digitales.`;
     case "cobertura":
       return `${de100(v)} de cada 100 centros poblados (pueblos y caseríos) tienen señal 4G.`;
     case "emergencias":

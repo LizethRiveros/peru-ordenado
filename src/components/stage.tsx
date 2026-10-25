@@ -43,8 +43,8 @@ type Item = {
 };
 
 const ease = (t: number) => 1 - (1 - t) ** 4;
-const DUR = 1300;
-const STAGGER = 700;
+const DUR = 800;
+const STAGGER = 350;
 
 /** Shapes ordered for the sorted view: highest value first, shapes without data last. */
 export function sortShapes(shapes: Shape[], metric: Metric): Shape[] {
