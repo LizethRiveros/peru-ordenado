@@ -7,6 +7,17 @@ export type Shape = {
   d: string;
   /** Local-government investment (genérica 2.6), soles. Absent when MEF reports no budget. */
   inv?: { pim: number; dev: number };
+  /**
+   * quipu: avance del año en curso, inversión municipal (genérica 2.6). `dev` es el devengado
+   * acumulado hasta el mes cerrado `hasta`; `devPrev`/`pimPrev` son lo mismo del año anterior.
+   */
+  avance?: {
+    pim: number;
+    dev: number;
+    pimPrev: number;
+    devPrev: number;
+    hasta: number;
+  };
   /** muniscan digital-surface index 0–100 (provinces and departments: mean of their districts). */
   digital?: number;
   /**
@@ -21,10 +32,10 @@ export type Level = "dep" | "prov" | "dist";
 export type Dataset = {
   width: number;
   height: number;
-  sources: { geo: string; spend: string };
+  sources: { geo: string; spend: string; quipu?: string };
 } & Record<Level, Shape[]>;
 
-export type Metric = "area" | "inversion" | "ejecucion" | "ornato" | "digital";
+export type Metric = "area" | "inversion" | "ejecucion" | "quipu" | "ornato" | "digital";
 
 export const LEVELS: Record<Level, { label: string; plural: string }> = {
   dep: { label: "Departamento", plural: "departamentos" },
@@ -42,6 +53,11 @@ export const METRICS: Record<Metric, { label: string; title: string }> = {
     label: "Inversión ejecutada",
     title: "ordenados por % de inversión municipal ejecutada en 2024",
   },
+  quipu: {
+    label: "Avance 2026 (quipu)",
+    title:
+      "ordenados por % de inversión municipal ya gastada en lo que va de 2026",
+  },
   ornato: {
     label: "Inversión en ornato",
     title:
@@ -57,6 +73,7 @@ export const SOURCE: Record<Metric, string> = {
   area: "IGN",
   inversion: "MEF 2024",
   ejecucion: "MEF 2024",
+  quipu: "MEF 2026 · quipu",
   ornato: "MEF + Jev",
   digital: "muniscan",
 };
@@ -77,6 +94,8 @@ export function certainty(shape: Shape): number {
 export function value(shape: Shape, metric: Metric): number | undefined {
   if (metric === "area") return shape.area;
   if (metric === "digital") return shape.digital;
+  if (metric === "quipu")
+    return shape.avance?.pim ? shape.avance.dev / shape.avance.pim : undefined;
   if (metric === "ornato")
     return shape.mix && shape.inv?.pim
       ? shape.mix.ornato / shape.inv.pim

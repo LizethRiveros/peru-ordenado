@@ -56,7 +56,7 @@ export function valueLabel(shape: Shape, metric: Metric): string {
   if (metric === "area") return km2(shape.area);
   if (metric === "digital")
     return shape.digital === undefined ? "sin datos" : `${shape.digital}/100`;
-  if (metric === "ornato") {
+  if (metric === "ornato" || metric === "quipu") {
     const v = value(shape, metric);
     return v === undefined ? "sin datos" : pct(v);
   }

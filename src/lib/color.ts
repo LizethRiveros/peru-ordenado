@@ -79,6 +79,10 @@ export function colorFor(
   if (metric === "area") return departmentColor(shape, jitter);
   if (metric === "digital")
     return shape.digital === undefined ? NO_DATA : digitalColor(shape.digital);
+  if (metric === "quipu")
+    return shape.avance?.pim
+      ? executionColor(shape.avance.dev / shape.avance.pim)
+      : NO_DATA;
   if (metric === "ornato")
     return shape.mix && shape.inv?.pim
       ? ornatoColor(shape.mix.ornato / shape.inv.pim)

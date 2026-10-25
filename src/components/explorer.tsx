@@ -591,6 +591,11 @@ function Legend({ metric, shapes }: { metric: Metric; shapes: Shape[] }) {
       lo: "0%",
       hi: "100%",
     },
+    quipu: {
+      colors: stops.map((t) => executionColor(t)),
+      lo: "0%",
+      hi: "100%",
+    },
     inversion: {
       colors: stops.map((t) => budgetColor(min * (max / min) ** t, min, max)),
       lo: soles(min),
@@ -727,6 +732,28 @@ function Tooltip({
             <dd className="text-right text-muted-foreground">sin datos</dd>
           </>
         )}
+        {shape.avance?.pim ? (
+          <>
+            <dt
+              className={
+                metric === "quipu" ? "text-foreground" : "text-muted-foreground"
+              }
+            >
+              Avance 2026
+            </dt>
+            <dd className="text-right font-mono">
+              {pct(shape.avance.dev / shape.avance.pim)}
+            </dd>
+            {shape.avance.pimPrev > 0 && (
+              <>
+                <dt className="text-muted-foreground">Mismo mes 2025</dt>
+                <dd className="text-right font-mono">
+                  {pct(shape.avance.devPrev / shape.avance.pimPrev)}
+                </dd>
+              </>
+            )}
+          </>
+        ) : null}
         {shape.mix && shape.inv?.pim ? (
           <>
             <dt
