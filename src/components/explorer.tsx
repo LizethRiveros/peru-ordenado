@@ -221,21 +221,30 @@ export function Explorer() {
       )}
       {step === null && !touched && data && (
         <div className="pointer-events-none absolute inset-x-0 bottom-14 z-10 flex justify-center px-4">
-          <button
-            type="button"
-            onClick={() => goTo(0)}
-            className="glass glass-border animate-in pointer-events-auto flex items-center gap-3 rounded-full py-2 pr-5 pl-2 text-left transition hover:scale-[1.02]"
-          >
-            <span className="grid size-9 place-items-center rounded-full bg-foreground text-background">
-              <PlayIcon />
-            </span>
-            <span className="flex flex-col">
-              <span className="text-[14px] font-medium">Ver la historia</span>
-              <span className="text-[11.5px] text-muted-foreground">
-                {story.length} pasos, un minuto. O explora por tu cuenta.
-              </span>
-            </span>
-          </button>
+          <div className="glass glass-border animate-in pointer-events-auto flex max-w-[26rem] flex-col gap-3 rounded-3xl p-4">
+            <p className="text-[13.5px] leading-snug text-foreground">
+              <strong className="font-medium">Esto es el Perú desarmado.</strong>{" "}
+              Cada forma es un departamento, una provincia o un distrito,
+              dibujado a su tamaño real. Cámbiale la pregunta en el panel y las
+              formas se reordenan.
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => goTo(0)}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-foreground px-3 py-2 text-[13px] font-medium text-background transition hover:opacity-90"
+              >
+                <PlayIcon /> Verlo en un minuto
+              </button>
+              <button
+                type="button"
+                onClick={() => setTouched(true)}
+                className="flex-1 rounded-xl border border-border px-3 py-2 text-[13px] transition hover:border-foreground/30"
+              >
+                Explorar yo
+              </button>
+            </div>
+          </div>
         </div>
       )}
       {step === null && touched && !hit && (
