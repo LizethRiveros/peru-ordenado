@@ -248,6 +248,7 @@ export function Explorer() {
             metric={sel.metric}
             label={`Mapa del Perú: ${title}`}
             highlight={highlight}
+            zoom={step === null && !!pickShape && !vsShape}
             onHover={setHit}
           />
         ) : (
@@ -285,8 +286,8 @@ export function Explorer() {
       )}
       {step === null && !touched && data && (
         <div className="pointer-events-none absolute inset-x-0 bottom-14 z-10 flex justify-center px-4">
-          <div className="glass glass-border animate-in pointer-events-auto flex max-w-[26rem] flex-col gap-3 rounded-3xl p-4">
-            <p className="text-[13.5px] leading-snug text-foreground">
+          <div className="glass glass-border animate-in pointer-events-auto flex max-w-[26rem] flex-col gap-3 rounded-3xl p-3 sm:p-4">
+            <p className="hidden text-[13.5px] leading-snug text-foreground sm:block">
               <strong className="font-medium">Cada pieza es un lugar real.</strong>{" "}
               Un distrito, una provincia o un departamento, dibujado a su
               tamaño. Escribe dónde vives y mira cuánto gastó tu municipalidad,
@@ -367,6 +368,17 @@ export function Explorer() {
             <div className="mt-4 max-w-sm">
               <PlaceFinder data={data} names={names} onPick={goToPlace} />
             </div>
+            <div className="mt-4 flex max-w-sm flex-wrap gap-1.5">
+              {CHIPS.map(([m, label]) => (
+                <Chip
+                  key={m}
+                  on={sel.metric === m}
+                  onClick={() => choose({ metric: m, view: "ordenado" })}
+                >
+                  {label}
+                </Chip>
+              ))}
+            </div>
           </div>
           {pickShape && (
             <PlaceCard
@@ -392,19 +404,6 @@ export function Explorer() {
           )}
 
           <div className="glass glass-border order-2 flex flex-col gap-4 rounded-3xl p-4 lg:order-none">
-            <Field label="¿Qué quieres ver?">
-              <div className="flex flex-wrap gap-1.5">
-                {CHIPS.map(([m, label]) => (
-                  <Chip
-                    key={m}
-                    on={sel.metric === m}
-                    onClick={() => choose({ metric: m, view: "ordenado" })}
-                  >
-                    {label}
-                  </Chip>
-                ))}
-              </div>
-            </Field>
             <Field label="Nivel">
               <Segmented
                 value={sel.level}
@@ -587,6 +586,18 @@ function PlaceCard({
     ? `${shape.name} frente a ${other.name}: mira cómo les va en gasto, 4G y emergencias en Quipu:`
     : `${shape.name}${shape.gentilicio ? ` (${shape.gentilicio})` : ""}: ${fig.big} ${fig.unit}. Mira el tuyo en Quipu:`;
   const level = shape.id.length === 2 ? "dep" : shape.id.length === 4 ? "prov" : "dist";
+  // "Puesto 1,540 de 1,873 distritos en gasto": where this place sits among its level, for the chosen question.
+  const rankText = useMemo(() => {
+    const mine = value(shape, m);
+    if (mine === undefined || m === "area") return "";
+    const all = peers.flatMap((p) => {
+      const v = value(p, m);
+      return v === undefined ? [] : [v];
+    });
+    const puesto = all.filter((v) => v > mine).length + 1;
+    const nombre = CHIPS.find(([k]) => k === m)?.[1].toLowerCase() ?? "";
+    return `Puesto ${count(puesto)} de ${count(all.length)} ${LEVELS[level].plural}${nombre ? ` en ${nombre}` : ""}`;
+  }, [shape, m, peers, level]);
   return (
     <div className="glass glass-border animate-in order-2 flex flex-col gap-3 rounded-3xl p-4 max-lg:glass-solid max-lg:fixed max-lg:inset-x-2 max-lg:bottom-2 max-lg:z-50 max-lg:max-h-[72dvh] max-lg:overflow-y-auto max-lg:shadow-2xl lg:order-none">
       <div className="flex items-start justify-between gap-3">
@@ -614,6 +625,10 @@ function PlaceCard({
         </button>
       </div>
       <FichaQuipu rows={rows} />
+      <p className="-mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+        {rankText ? `${rankText}. ` : ""}Cada hilo es más largo cuanto más
+        arriba queda frente a los demás {LEVELS[level].plural}.
+      </p>
       {other ? (
         <div className="flex flex-col gap-1 border-t border-border pt-3">
           <div className="flex items-center justify-between">
@@ -649,6 +664,16 @@ function PlaceCard({
         <p className="text-[12.5px] leading-relaxed text-foreground/80">
           {line}
         </p>
+      )}
+      {!other && (
+        <img
+          src={`/og?lugar=${shape.id}&orden=${m}`}
+          alt={`Imagen para compartir: ${shape.name}`}
+          width={1200}
+          height={630}
+          loading="lazy"
+          className="w-full rounded-xl border border-border"
+        />
       )}
       <ShareMenu
         card={{
