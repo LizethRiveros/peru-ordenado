@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { gridLayout, mapLayout } from "@/lib/layout";
+import { gridLayout, labelWidth, mapLayout } from "@/lib/layout";
 import type { Shape } from "@/lib/shapes";
 
 const sq = (id: string, size: number, x = 0): Shape => ({
@@ -59,4 +59,10 @@ test("titles agree in gender with the level", async () => {
   expect(
     selectionTitle({ level: "dist", view: "ordenado", metric: "area" }, 1873),
   ).toStartWith("1,873 distritos ordenados");
+});
+
+test("label width grows with the name and is capped", () => {
+  expect(labelWidth("Ica")).toBe(44);
+  expect(labelWidth("Barranquita")).toBeGreaterThan(labelWidth("Ica"));
+  expect(labelWidth("Mariscal Ramón Castilla de la Frontera Norte")).toBe(150);
 });

@@ -6,6 +6,8 @@ import { SiteHeader } from "@/components/site-header";
 import { Stage, sortShapes, valueLabel } from "@/components/stage";
 import {
   budgetColor,
+  countColor,
+  coverageColor,
   digitalColor,
   executionColor,
   NO_DATA,
@@ -67,6 +69,8 @@ export function Explorer() {
     q.set("nivel", sel.level);
     q.set("vista", sel.view);
     q.set("orden", sel.metric);
+    if (sel.dep) q.set("dep", sel.dep);
+    else q.delete("dep");
     window.history.replaceState(null, "", `?${q}`);
   }, [sel, ready]);
 
@@ -100,7 +104,12 @@ export function Explorer() {
     setSel((s) => ({ ...s, ...n }));
   };
 
-  const shapes = data?.[sel.level] ?? [];
+  // A single department, when one is chosen: provinces and districts are those inside it.
+  const scope = useMemo(
+    () => (data && sel.dep ? inDepartment(data, sel.dep) : data),
+    [data, sel.dep],
+  );
+  const shapes = scope?.[sel.level] ?? [];
   const title = selectionTitle(sel, shapes.length);
 
   const ranked = useMemo(
@@ -119,6 +128,8 @@ export function Explorer() {
     return m;
   }, [data]);
 
+  const depName = sel.dep ? names.get(sel.dep) : undefined;
+
   const stage = (
     <section
       className={
@@ -129,7 +140,7 @@ export function Explorer() {
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col items-center gap-1 px-4 pt-4 text-center sm:pt-5">
         <p className="text-[13px] font-semibold tracking-[0.18em] text-foreground">
-          PERÚ
+          {depName ? depName.toUpperCase() : "PERÚ"}
         </p>
         <p
           key={title}
@@ -147,9 +158,10 @@ export function Explorer() {
               : "bottom-10"
         }`}
       >
-        {data ? (
+        {scope ? (
           <Stage
-            data={data}
+            key={sel.dep ?? "peru"}
+            data={scope}
             level={sel.level}
             view={sel.view}
             metric={sel.metric}
@@ -252,6 +264,22 @@ export function Explorer() {
                 ]}
                 onChange={(level) => choose({ level })}
               />
+            </Field>
+            <Field label="Departamento">
+              <select
+                value={sel.dep ?? ""}
+                onChange={(e) => choose({ dep: e.target.value || undefined })}
+                className="rounded-xl border border-border bg-foreground/[0.03] px-3 py-2 text-[13px] text-foreground"
+              >
+                <option value="">Todo el Perú</option>
+                {[...(data?.dep ?? [])]
+                  .sort((a, b) => a.name.localeCompare(b.name, "es"))
+                  .map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+              </select>
             </Field>
             <Field label="Ordenar y colorear por">
               <div className="flex flex-col gap-1.5">
@@ -505,6 +533,15 @@ function ShareButton({ title }: { title: string }) {
   );
 }
 
+function inDepartment(data: Dataset, dep: string): Dataset {
+  return {
+    ...data,
+    dep: data.dep.filter((s) => s.id === dep),
+    prov: data.prov.filter((s) => s.dep === dep),
+    dist: data.dist.filter((s) => s.dep === dep),
+  };
+}
+
 function Field({
   label,
   children,
@@ -591,6 +628,11 @@ function Legend({ metric, shapes }: { metric: Metric; shapes: Shape[] }) {
       lo: "0%",
       hi: "100%",
     },
+    quipu: {
+      colors: stops.map((t) => executionColor(t)),
+      lo: "0%",
+      hi: "100%",
+    },
     inversion: {
       colors: stops.map((t) => budgetColor(min * (max / min) ** t, min, max)),
       lo: soles(min),
@@ -600,6 +642,21 @@ function Legend({ metric, shapes }: { metric: Metric; shapes: Shape[] }) {
       colors: stops.map((t) => ornatoColor(t * 0.3)),
       lo: "0%",
       hi: "30%+",
+    },
+    cobertura: {
+      colors: stops.map((t) => coverageColor(t * 0.5)),
+      lo: "0%",
+      hi: "50%+",
+    },
+    emergencias: {
+      colors: stops.map((t) => countColor(t * 9, 9)),
+      lo: "0",
+      hi: "9+",
+    },
+    zonas: {
+      colors: stops.map((t) => countColor(t * 6, 6)),
+      lo: "0",
+      hi: "6+",
     },
     digital: {
       colors: stops.map((t) => digitalColor(20 + t * 50)),
@@ -699,6 +756,11 @@ function Tooltip({
       </p>
       <p className="font-display text-[17px] leading-tight">{shape.name}</p>
       {where && <p className="text-[11px] text-muted-foreground">{where}</p>}
+      {shape.gentilicio && (
+        <p className="text-[11px] text-muted-foreground italic">
+          Gentilicio: {shape.gentilicio}
+        </p>
+      )}
       <dl className="mt-2 grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5">
         <dt className="text-muted-foreground">Área</dt>
         <dd className="text-right font-mono">{km2(shape.area)}</dd>
@@ -727,6 +789,80 @@ function Tooltip({
             <dd className="text-right text-muted-foreground">sin datos</dd>
           </>
         )}
+        {shape.avance?.pim ? (
+          <>
+            <dt
+              className={
+                metric === "quipu" ? "text-foreground" : "text-muted-foreground"
+              }
+            >
+              Avance 2026
+            </dt>
+            <dd className="text-right font-mono">
+              {pct(shape.avance.dev / shape.avance.pim)}
+            </dd>
+            {shape.avance.pimPrev > 0 && (
+              <>
+                <dt className="text-muted-foreground">Mismo mes 2025</dt>
+                <dd className="text-right font-mono">
+                  {pct(shape.avance.devPrev / shape.avance.pimPrev)}
+                </dd>
+              </>
+            )}
+          </>
+        ) : null}
+        {shape.terr ? (
+          <>
+            {shape.terr.cp > 0 && (
+              <>
+                <dt
+                  className={
+                    metric === "cobertura"
+                      ? "text-foreground"
+                      : "text-muted-foreground"
+                  }
+                >
+                  Centros poblados con 4G
+                </dt>
+                <dd className="text-right font-mono">
+                  {pct(shape.terr.cp4g / shape.terr.cp)}
+                </dd>
+              </>
+            )}
+            {shape.terr.emergN > 0 && (
+              <>
+                <dt
+                  className={
+                    metric === "emergencias"
+                      ? "text-foreground"
+                      : "text-muted-foreground"
+                  }
+                >
+                  Decretos de emergencia
+                </dt>
+                <dd className="text-right font-mono">
+                  {(shape.terr.emerg / shape.terr.emergN).toFixed(1)}
+                </dd>
+              </>
+            )}
+            {shape.terr.zonasN > 0 && (
+              <>
+                <dt
+                  className={
+                    metric === "zonas"
+                      ? "text-foreground"
+                      : "text-muted-foreground"
+                  }
+                >
+                  Zonas críticas
+                </dt>
+                <dd className="text-right font-mono">
+                  {(shape.terr.zonas / shape.terr.zonasN).toFixed(1)}
+                </dd>
+              </>
+            )}
+          </>
+        ) : null}
         {shape.mix && shape.inv?.pim ? (
           <>
             <dt
