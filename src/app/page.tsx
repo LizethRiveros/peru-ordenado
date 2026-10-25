@@ -13,6 +13,9 @@ export async function generateMetadata({
     vista: sel.view,
     orden: sel.metric,
   });
+  const lugar = (await searchParams).lugar;
+  if (typeof lugar === "string" && /^\d{2}(\d{2}(\d{2})?)?$/.test(lugar))
+    q.set("lugar", lugar);
   const description = `Perú: ${selectionTitle(sel, COUNTS[sel.level])}.`;
   return {
     description,
