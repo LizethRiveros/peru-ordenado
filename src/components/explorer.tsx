@@ -326,8 +326,8 @@ export function Explorer() {
               Qui<em className="font-light">pu</em>
             </h1>
             <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
-              ¿De qué distrito eres? Escríbelo y mira sus datos: cuánto gastó
-              en obras, si le llega el 4G y cuántas emergencias ha vivido.
+              ¿De qué distrito eres? Mira cuánto gastó en obras, su cobertura
+              4G y sus emergencias.
             </p>
             {headline && (
               <div className="mt-5 max-w-sm">
