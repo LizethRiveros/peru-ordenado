@@ -10,6 +10,7 @@ import {
   useState,
 } from "react";
 import { AboutDialog } from "@/components/about-dialog";
+import { FichaQuipu } from "@/components/ficha-quipu";
 import { PlaceFinder } from "@/components/place-finder";
 import { ShareMenu } from "@/components/share-menu";
 import { SiteHeader } from "@/components/site-header";
@@ -44,6 +45,7 @@ import {
   SOURCE,
   value,
 } from "@/lib/shapes";
+import { fichaRows } from "@/lib/ficha";
 import { figure } from "@/lib/figure";
 import { buildStory, type Step } from "@/lib/story";
 
@@ -57,6 +59,7 @@ export function Explorer() {
     metric: "quipu",
   });
   const [pick, setPick] = useState<string | null>(null);
+  const [vs, setVs] = useState<string | null>(null);
   const [allNames, setAllNames] = useState(false);
   const [hit, setHit] = useState<Hit | null>(null);
   const [video, setVideo] = useState(false);
@@ -73,6 +76,8 @@ export function Explorer() {
     const lugar = q.get("lugar");
     if (lugar && /^\d{2}(\d{2}(\d{2})?)?$/.test(lugar)) {
       setPick(lugar);
+      const other = q.get("vs");
+      if (other && /^\d{2}(\d{2}(\d{2})?)?$/.test(other)) setVs(other);
       rest.dep = lugar.slice(0, 2);
       rest.level = lugar.length === 2 ? "dep" : lugar.length === 4 ? "prov" : "dist";
       rest.view = "ordenado";
@@ -101,8 +106,10 @@ export function Explorer() {
     else q.delete("nombres");
     if (pick) q.set("lugar", pick);
     else q.delete("lugar");
+    if (pick && vs) q.set("vs", vs);
+    else q.delete("vs");
     window.history.replaceState(null, "", `?${q}`);
-  }, [sel, ready, allNames, pick]);
+  }, [sel, ready, allNames, pick, vs]);
 
   const story = useMemo(() => (data ? buildStory(data) : []), [data]);
 
@@ -130,6 +137,7 @@ export function Explorer() {
 
   const choose = (n: Partial<Selection>) => {
     setPick(null);
+    setVs(null);
     setStep(null);
     setTouched(true);
     setSel((s) => ({ ...s, ...n }));
@@ -166,19 +174,24 @@ export function Explorer() {
     if (!data || !pick) return undefined;
     return [...data.dist, ...data.prov, ...data.dep].find((s) => s.id === pick);
   }, [data, pick]);
+  const vsShape = useMemo(() => {
+    if (!data || !vs) return undefined;
+    return [...data.dist, ...data.prov, ...data.dep].find((s) => s.id === vs);
+  }, [data, vs]);
   const highlight = useMemo(
     () =>
       step !== null
         ? story[step]?.highlight
         : pickShape
-          ? [pickShape.id]
+          ? [pickShape.id, ...(vsShape ? [vsShape.id] : [])]
           : undefined,
-    [step, story, pickShape],
+    [step, story, pickShape, vsShape],
   );
   const goToPlace = (s: Shape) => {
     setStep(null);
     setTouched(true);
     setPick(s.id);
+    setVs(null);
     setSel((x) => ({
       ...x,
       dep: s.dep,
@@ -363,7 +376,16 @@ export function Explorer() {
                 data?.[pickShape.id.length === 2 ? "dep" : pickShape.id.length === 4 ? "prov" : "dist"] ?? [],
                 sel.metric,
               )}
-              onClose={() => setPick(null)}
+              peers={data?.[levelOf(pickShape.id)] ?? []}
+              other={vsShape}
+              otherPeers={vsShape ? (data?.[levelOf(vsShape.id)] ?? []) : []}
+              data={data}
+              onCompare={(s) => setVs(s.id)}
+              onClearCompare={() => setVs(null)}
+              onClose={() => {
+                setPick(null);
+                setVs(null);
+              }}
             />
           )}
 
@@ -496,6 +518,12 @@ function PlaceCard({
   names,
   country,
   range,
+  peers,
+  other,
+  otherPeers,
+  data,
+  onCompare,
+  onClearCompare,
   onClose,
 }: {
   shape: Shape;
@@ -503,8 +531,19 @@ function PlaceCard({
   names: Map<string, string>;
   country?: string;
   range: [number, number];
+  peers: Shape[];
+  other?: Shape;
+  otherPeers: Shape[];
+  data: Dataset | null;
+  onCompare: (s: Shape) => void;
+  onClearCompare: () => void;
   onClose: () => void;
 }) {
+  const rows = useMemo(() => fichaRows(shape, peers), [shape, peers]);
+  const otherRows = useMemo(
+    () => (other ? fichaRows(other, otherPeers) : []),
+    [other, otherPeers],
+  );
   const fig = figure(shape, metric);
   const has = value(shape, metric) !== undefined || metric === "area";
   const m = has ? metric : "area";
@@ -518,8 +557,10 @@ function PlaceCard({
   const line = [main, country && has ? `El país en conjunto: ${country}.` : ""]
     .filter(Boolean)
     .join(" ");
-  const url = `${window.location.origin}/?lugar=${shape.id}&orden=${m}`;
-  const text = `${shape.name}${shape.gentilicio ? ` (${shape.gentilicio})` : ""}: ${fig.big} ${fig.unit}. Mira el tuyo en Quipu:`;
+  const url = `${window.location.origin}/?lugar=${shape.id}&orden=${m}${other ? `&vs=${other.id}` : ""}`;
+  const text = other
+    ? `${shape.name} frente a ${other.name}: mira cómo les va en gasto, 4G y emergencias en Quipu:`
+    : `${shape.name}${shape.gentilicio ? ` (${shape.gentilicio})` : ""}: ${fig.big} ${fig.unit}. Mira el tuyo en Quipu:`;
   const level = shape.id.length === 2 ? "dep" : shape.id.length === 4 ? "prov" : "dist";
   return (
     <div className="glass glass-border animate-in order-2 flex flex-col gap-3 rounded-3xl p-4 lg:order-none">
@@ -547,11 +588,39 @@ function PlaceCard({
           ×
         </button>
       </div>
-      <p className="leading-tight">
-        <span className="font-display text-[44px] text-accent">{fig.big}</span>{" "}
-        <span className="text-[13px] text-muted-foreground">{fig.unit}</span>
-      </p>
-      {line && (
+      <FichaQuipu rows={rows} />
+      {other ? (
+        <div className="flex flex-col gap-1 border-t border-border pt-3">
+          <div className="flex items-center justify-between">
+            <p className="font-display text-[22px] leading-tight">
+              {other.name}
+            </p>
+            <button
+              type="button"
+              onClick={onClearCompare}
+              aria-label="Quitar comparación"
+              className="rounded-lg px-2 py-1 text-muted-foreground transition hover:bg-foreground/5"
+            >
+              ×
+            </button>
+          </div>
+          <FichaQuipu rows={otherRows} />
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1.5 border-t border-border pt-3">
+          <p className="text-[10.5px] tracking-[0.06em] text-muted-foreground uppercase">
+            Compáralo con otro
+          </p>
+          <PlaceFinder
+            id="comparar"
+            data={data}
+            names={names}
+            onPick={onCompare}
+            placeholder="Escribe otro distrito"
+          />
+        </div>
+      )}
+      {line && !other && (
         <p className="text-[12.5px] leading-relaxed text-foreground/80">
           {line}
         </p>
@@ -560,8 +629,7 @@ function PlaceCard({
         card={{
           shape,
           where: where || LEVELS[level].label,
-          big: fig.big,
-          unit: fig.unit,
+          rows,
           line,
           question: METRICS[m].label,
           fill: colorFor(shape, m, false, range),
@@ -572,6 +640,9 @@ function PlaceCard({
     </div>
   );
 }
+
+const levelOf = (id: string): Level =>
+  id.length === 2 ? "dep" : id.length === 4 ? "prov" : "dist";
 
 function PlayIcon() {
   return (

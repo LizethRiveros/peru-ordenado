@@ -4,7 +4,7 @@ import { ImageResponse } from "next/og";
 import { colorFor, rangeFor, toRgb } from "@/lib/color";
 import { gridLayout, mapLayout } from "@/lib/layout";
 import { type Selection, selectionTitle } from "@/lib/selection";
-import { figure } from "@/lib/figure";
+import { fichaRows } from "@/lib/ficha";
 import { type Dataset, METRICS, type Metric, value } from "@/lib/shapes";
 
 export const ogSize = { width: 1200, height: 630 };
@@ -167,10 +167,10 @@ export async function ogPlace(id: string, metric: Metric) {
     .filter(Boolean)
     .join(", ");
   const m = metric === "area" || value(shape, metric) !== undefined ? metric : "area";
-  const fig = figure(shape, m);
   const [x0, y0, x1, y1] = shape.bbox;
   const k = Math.min(500 / (x1 - x0), 500 / (y1 - y0));
   const level = shape.id.length === 2 ? "dep" : shape.id.length === 4 ? "prov" : "dist";
+  const rows = fichaRows(shape, data[level]);
   const fill = toRgb(colorFor(shape, m, false, rangeFor(data[level], m)));
   return new ImageResponse(
     <div
@@ -202,20 +202,15 @@ export async function ogPlace(id: string, metric: Metric) {
           <div style={{ display: "flex", fontSize: 24, color: "#7a6552", marginTop: 8 }}>
             {where}
           </div>
-          <div
-            style={{
-              display: "flex",
-              fontFamily: "Fraunces",
-              fontSize: 128,
-              lineHeight: 1,
-              color: "#b5522b",
-              marginTop: 28,
-            }}
-          >
-            {fig.big}
-          </div>
-          <div style={{ display: "flex", fontSize: 26, color: "#3a2a1c", maxWidth: 520 }}>
-            {fig.unit}
+          <div style={{ display: "flex", gap: 30, marginTop: 34 }}>
+            {rows.map((r) => (
+              <div key={r.key} style={{ display: "flex", flexDirection: "column" }}>
+                <div style={{ display: "flex", fontFamily: "Fraunces", fontSize: r.text === "sin dato" ? 22 : 46, lineHeight: 1.1, color: r.frac === null ? "#b7a48f" : "#b5522b" }}>
+                  {r.text}
+                </div>
+                <div style={{ display: "flex", fontSize: 17, color: "#7a6552", marginTop: 4 }}>{r.label}</div>
+              </div>
+            ))}
           </div>
         </div>
         <div style={{ display: "flex", fontSize: 18, color: "#857b6e" }}>

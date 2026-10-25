@@ -165,6 +165,23 @@ body {
   }
 }
 
+@keyframes cord {
+  from {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.cord {
+  transform-box: fill-box;
+  transform-origin: top;
+  animation: cord 0.8s var(--ease-smooth) both;
+}
+
 @utility animate-in {
   animation: rise 0.6s var(--ease-smooth) both;
 }

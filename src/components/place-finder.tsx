@@ -14,10 +14,14 @@ export function PlaceFinder({
   data,
   names,
   onPick,
+  placeholder = "Escribe tu distrito",
+  id = "lugar",
 }: {
   data: Dataset | null;
   names: Map<string, string>;
   onPick: (s: Shape) => void;
+  placeholder?: string;
+  id?: string;
 }) {
   const [q, setQ] = useState("");
   const index = useMemo(
@@ -47,14 +51,14 @@ export function PlaceFinder({
 
   return (
     <div className="relative">
-      <label className="sr-only" htmlFor="lugar">
-        ¿Dónde vives?
+      <label className="sr-only" htmlFor={id}>
+        {placeholder}
       </label>
       <input
-        id="lugar"
+        id={id}
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="Escribe tu distrito"
+        placeholder={placeholder}
         autoComplete="off"
         className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground focus:border-accent/60 focus:outline-none"
       />
