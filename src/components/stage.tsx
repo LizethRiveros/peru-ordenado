@@ -11,6 +11,7 @@ import {
   type Place,
 } from "@/lib/layout";
 import {
+  certainty,
   type Dataset,
   type Level,
   type Metric,
@@ -35,6 +36,8 @@ type Item = {
   start: number;
   dur: number;
   color: string;
+  /** Opacity multiplier: shapes whose Jev answers were unsure fade out in the ornament view. */
+  sure: number;
 };
 
 const ease = (t: number) => 1 - (1 - t) ** 4;
@@ -50,6 +53,12 @@ export function sortShapes(shapes: Shape[], metric: Metric): Shape[] {
 
 export function valueLabel(shape: Shape, metric: Metric): string {
   if (metric === "area") return km2(shape.area);
+  if (metric === "digital")
+    return shape.digital === undefined ? "sin datos" : `${shape.digital}/100`;
+  if (metric === "ornato") {
+    const v = value(shape, metric);
+    return v === undefined ? "sin datos" : pct(v);
+  }
   if (!shape.inv) return "sin datos";
   return metric === "inversion"
     ? soles(shape.inv.pim)
@@ -174,6 +183,7 @@ export function Stage({
             start: now + (down || first ? delay(shape.id) : DUR * 0.55),
             dur: reduced ? 1 : DUR,
             color: colorFor(shape, next.metric, next.level !== "dep", rng),
+            sure: sureFor(shape, next.metric),
           });
         }
       } else {
@@ -188,6 +198,7 @@ export function Stage({
             start: now + (moved ? delay(it.shape.id) : 0),
             dur: moved && !reduced ? DUR : 1,
             color: colorFor(it.shape, next.metric, next.level !== "dep", rng),
+            sure: sureFor(it.shape, next.metric),
           });
         }
       }
@@ -231,7 +242,7 @@ export function Stage({
           dpr * (x - it.cx * s),
           dpr * (y - it.cy * s),
         );
-        ctx.globalAlpha = a;
+        ctx.globalAlpha = a * it.sure;
         ctx.fillStyle = it.color;
         ctx.fill(it.path);
         if (hovered.current === it.key) {
@@ -365,6 +376,9 @@ export function Stage({
     />
   );
 }
+
+const sureFor = (shape: Shape, metric: Metric) =>
+  metric === "ornato" ? 0.25 + 0.75 * certainty(shape) : 1;
 
 function parentAt(level: Level, id: string, target: Level): string | undefined {
   let lvl: Level = level;

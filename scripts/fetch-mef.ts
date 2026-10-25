@@ -1,5 +1,6 @@
 // Streams MEF "Presupuesto y Ejecución de Gasto" (~10 GB CSV) and keeps one row per municipality:
-// PIM and devengado in total and for genérica 2.6 (investment). Writes data/raw/mef-municipal-<year>.json.
+// PIM and devengado in total and for genérica 2.6 (investment), plus each investment project per
+// district. Writes data/raw/mef-municipal-<year>.json and data/raw/mef-projects-<year>.json.
 const year = process.argv[2] ?? "2024";
 const url = `https://fs.datosabiertos.mef.gob.pe/datastorefiles/${year}-Gasto.csv`;
 
@@ -52,6 +53,17 @@ if (import.meta.main) {
   if (!res.ok || !res.body) throw new Error(`${url} → ${res.status}`);
   const dec = new TextDecoder();
   const acc = new Map<string, Row>();
+  const projects = new Map<
+    string,
+    {
+      ub: string;
+      code: string;
+      name: string;
+      funcion: string;
+      pim: number;
+      dev: number;
+    }
+  >();
   const col: Record<string, number> = {};
   let buf = "";
   let header = false;
@@ -98,6 +110,22 @@ if (import.meta.main) {
       if (f[col.GENERICA] === "6") {
         a.invPim += pim;
         a.invDev += dev;
+        const ub = a.dep + a.prov + a.dist;
+        const pk = `${ub}|${f[col.PRODUCTO_PROYECTO]}`;
+        let p = projects.get(pk);
+        if (!p) {
+          p = {
+            ub,
+            code: f[col.PRODUCTO_PROYECTO],
+            name: f[col.PRODUCTO_PROYECTO_NOMBRE],
+            funcion: f[col.FUNCION_NOMBRE],
+            pim: 0,
+            dev: 0,
+          };
+          projects.set(pk, p);
+        }
+        p.pim += pim;
+        p.dev += dev;
       }
     }
   }
@@ -105,5 +133,11 @@ if (import.meta.main) {
     `data/raw/mef-municipal-${year}.json`,
     JSON.stringify([...acc.values()]),
   );
-  console.log(`${rows} rows · ${acc.size} municipalities`);
+  await Bun.write(
+    `data/raw/mef-projects-${year}.json`,
+    JSON.stringify([...projects.values()]),
+  );
+  console.log(
+    `${rows} rows · ${acc.size} municipalities · ${projects.size} projects`,
+  );
 }

@@ -58,6 +58,18 @@ export function budgetColor(pim: number, min: number, max: number): string {
   return `oklch(${(0.86 - t * 0.44).toFixed(3)} ${(0.04 + t * 0.1).toFixed(3)} 200)`;
 }
 
+/** Ornament share on a sand → deep magenta ramp; 30% and above saturates. */
+export function ornatoColor(r: number): string {
+  const t = Math.max(0, Math.min(1, r / 0.3));
+  return `oklch(${(0.88 - t * 0.42).toFixed(3)} ${(0.03 + t * 0.16).toFixed(3)} ${(80 - t * 85).toFixed(1)})`;
+}
+
+/** muniscan index on a slate → electric blue ramp over 20–70, where nearly every score falls. */
+export function digitalColor(v: number): string {
+  const t = Math.max(0, Math.min(1, (v - 20) / 50));
+  return `oklch(${(0.82 - t * 0.3).toFixed(3)} ${(0.02 + t * 0.17).toFixed(3)} 255)`;
+}
+
 export function colorFor(
   shape: Shape,
   metric: Metric,
@@ -65,6 +77,12 @@ export function colorFor(
   range: [number, number],
 ): string {
   if (metric === "area") return departmentColor(shape, jitter);
+  if (metric === "digital")
+    return shape.digital === undefined ? NO_DATA : digitalColor(shape.digital);
+  if (metric === "ornato")
+    return shape.mix && shape.inv?.pim
+      ? ornatoColor(shape.mix.ornato / shape.inv.pim)
+      : NO_DATA;
   if (!shape.inv) return NO_DATA;
   if (metric === "ejecucion")
     return executionColor(shape.inv.dev / shape.inv.pim);

@@ -4,15 +4,23 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AboutDialog } from "@/components/about-dialog";
 import { SiteHeader } from "@/components/site-header";
 import { Stage, sortShapes, type View, valueLabel } from "@/components/stage";
-import { budgetColor, executionColor, NO_DATA } from "@/lib/color";
+import {
+  budgetColor,
+  digitalColor,
+  executionColor,
+  NO_DATA,
+  ornatoColor,
+} from "@/lib/color";
 import { count, km2, pct, soles } from "@/lib/format";
 import {
+  certainty,
   type Dataset,
   LEVELS,
   type Level,
   METRICS,
   type Metric,
   type Shape,
+  SOURCE,
   value,
 } from "@/lib/shapes";
 
@@ -41,10 +49,7 @@ function readUrl(): Partial<Selection> & { video?: boolean } {
         ? level
         : undefined,
     view: view === "mapa" || view === "ordenado" ? view : undefined,
-    metric:
-      metric === "area" || metric === "inversion" || metric === "ejecucion"
-        ? metric
-        : undefined,
+    metric: metric && metric in METRICS ? (metric as Metric) : undefined,
     video: q.has("video"),
   };
 }
@@ -163,7 +168,7 @@ export function Explorer() {
           {title}
         </p>
       </div>
-      <div className="absolute inset-x-0 top-14 bottom-10 sm:top-16">
+      <div className="absolute inset-x-0 top-20 bottom-10 sm:top-16">
         {data ? (
           <Stage
             data={data}
@@ -196,8 +201,8 @@ export function Explorer() {
   return (
     <div className="flex min-h-dvh flex-col">
       <SiteHeader about={<AboutDialog sources={data?.sources} />} />
-      <main className="grid flex-1 gap-4 px-3 pb-3 sm:px-5 lg:h-[calc(100dvh-3.75rem)] lg:grid-cols-[minmax(20rem,23rem)_1fr]">
-        <aside className="contents lg:flex lg:flex-col lg:gap-5 lg:overflow-y-auto lg:pt-8 lg:pr-1">
+      <main className="grid flex-1 gap-4 lg:min-h-0 lg:flex-none px-3 pb-3 sm:px-5 lg:h-[calc(100dvh-3.75rem)] lg:grid-cols-[minmax(20rem,23rem)_1fr] lg:grid-rows-[minmax(0,1fr)]">
+        <aside className="contents lg:flex lg:min-h-0 lg:flex-col lg:gap-5 lg:overflow-y-auto lg:pt-8 lg:pr-1">
           <div className="animate-in order-first pt-3 lg:pt-0">
             <h1 className="font-display text-5xl leading-[0.95] tracking-[-0.02em] sm:text-6xl">
               Perú, <em className="font-light">ordenado</em>
@@ -243,7 +248,7 @@ export function Explorer() {
                   >
                     <span>{METRICS[m].label}</span>
                     <span className="text-[11px] text-muted-foreground">
-                      {m === "area" ? "IGN" : "MEF 2024"}
+                      {SOURCE[m]}
                     </span>
                   </button>
                 ))}
@@ -367,18 +372,38 @@ function Legend({ metric, shapes }: { metric: Metric; shapes: Shape[] }) {
   const stops = Array.from({ length: 9 }, (_, i) => i / 8);
   const pims = shapes.flatMap((s) => (s.inv ? [s.inv.pim] : []));
   const [min, max] = [Math.max(1, Math.min(...pims)), Math.max(2, ...pims)];
-  const gradient =
-    metric === "ejecucion"
-      ? stops.map((t) => executionColor(t))
-      : stops.map((t) => budgetColor(min * (max / min) ** t, min, max));
+  const scale = {
+    ejecucion: {
+      colors: stops.map((t) => executionColor(t)),
+      lo: "0%",
+      hi: "100%",
+    },
+    inversion: {
+      colors: stops.map((t) => budgetColor(min * (max / min) ** t, min, max)),
+      lo: soles(min),
+      hi: soles(max),
+    },
+    ornato: {
+      colors: stops.map((t) => ornatoColor(t * 0.3)),
+      lo: "0%",
+      hi: "30%+",
+    },
+    digital: {
+      colors: stops.map((t) => digitalColor(20 + t * 50)),
+      lo: "≤20",
+      hi: "70+",
+    },
+  }[metric];
   return (
     <div className="flex flex-col gap-1.5">
       <div
         className="h-2 rounded-full"
-        style={{ background: `linear-gradient(90deg, ${gradient.join(",")})` }}
+        style={{
+          background: `linear-gradient(90deg, ${scale.colors.join(",")})`,
+        }}
       />
       <div className="flex justify-between text-[10.5px] text-muted-foreground">
-        <span>{metric === "ejecucion" ? "0%" : soles(min)}</span>
+        <span>{scale.lo}</span>
         <span className="flex items-center gap-1">
           <i
             className="inline-block size-2 rounded-full"
@@ -386,8 +411,22 @@ function Legend({ metric, shapes }: { metric: Metric; shapes: Shape[] }) {
           />{" "}
           sin datos
         </span>
-        <span>{metric === "ejecucion" ? "100%" : soles(max)}</span>
+        <span>{scale.hi}</span>
       </div>
+      {metric === "ornato" && (
+        <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+          Jev clasificó cada proyecto por su nombre. Las formas más
+          transparentes tienen más inversión que Jev no pudo clasificar con
+          seguridad.
+        </p>
+      )}
+      {metric === "digital" && (
+        <p className="text-[11.5px] leading-relaxed text-muted-foreground">
+          Índice de muniscan: qué tanto sistema propio declara cada
+          municipalidad en gob.pe. Provincias y departamentos muestran el
+          promedio de sus distritos.
+        </p>
+      )}
     </div>
   );
 }
@@ -475,6 +514,42 @@ function Tooltip({
             <dd className="text-right text-muted-foreground">sin datos</dd>
           </>
         )}
+        {shape.mix && shape.inv?.pim ? (
+          <>
+            <dt
+              className={
+                metric === "ornato"
+                  ? "text-foreground"
+                  : "text-muted-foreground"
+              }
+            >
+              Ornato
+            </dt>
+            <dd className="text-right font-mono">
+              {pct(shape.mix.ornato / shape.inv.pim)}
+            </dd>
+            <dt className="text-muted-foreground">Deporte</dt>
+            <dd className="text-right font-mono">
+              {pct(shape.mix.deporte / shape.inv.pim)}
+            </dd>
+            <dt className="text-muted-foreground">Local municipal</dt>
+            <dd className="text-right font-mono">
+              {pct(shape.mix.local / shape.inv.pim)}
+            </dd>
+            <dt className="text-muted-foreground">Jev seguro</dt>
+            <dd className="text-right font-mono">{pct(certainty(shape))}</dd>
+          </>
+        ) : null}
+        <dt
+          className={
+            metric === "digital" ? "text-foreground" : "text-muted-foreground"
+          }
+        >
+          Superficie digital
+        </dt>
+        <dd className="text-right font-mono">
+          {shape.digital === undefined ? "sin datos" : `${shape.digital}/100`}
+        </dd>
       </dl>
     </div>
   );

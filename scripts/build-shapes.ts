@@ -5,6 +5,9 @@ import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { feature } from "topojson-client";
 import { topology } from "topojson-server";
 import { presimplify, quantile, simplify } from "topojson-simplify";
+import type { Shape } from "@/lib/shapes";
+import { key as projectKey } from "./classify-projects";
+import { matchMunicipality } from "./muniscan-match";
 
 const W = 1000;
 const H = 1300;
@@ -88,11 +91,17 @@ for (const m of mef) {
   const prev = byUbigeo.get(k);
   byUbigeo.set(
     k,
-    prev ? { ...prev, invPim: prev.invPim + m.invPim, invDev: prev.invDev + m.invDev } : m,
+    prev
+      ? {
+          ...prev,
+          invPim: prev.invPim + m.invPim,
+          invDev: prev.invDev + m.invDev,
+        }
+      : m,
   );
 }
 
-function shape(level: keyof typeof levels, f: Feature<Geometry, Props>) {
+function shape(level: keyof typeof levels, f: Feature<Geometry, Props>): Shape {
   const k = keyOf[level];
   const id = String(f.properties[`${k}_pcode`]).slice(2);
   const [[x0, y0], [x1, y1]] = path.bounds(f);
@@ -104,7 +113,7 @@ function shape(level: keyof typeof levels, f: Feature<Geometry, Props>) {
     name,
     dep: id.slice(0, 2),
     area: Math.round(Number(f.properties.area_sqkm) * 10) / 10,
-    bbox: [x0, y0, x1, y1].map((n) => Math.round(n * 10) / 10),
+    bbox: [x0, y0, x1, y1].map((n) => Math.round(n * 10) / 10) as Shape["bbox"],
     d: round(path(f) ?? ""),
     ...(spend && spend.invPim > 0
       ? {
@@ -115,11 +124,93 @@ function shape(level: keyof typeof levels, f: Feature<Geometry, Props>) {
 }
 
 const dist = fc("dist").features.map((f) => shape("dist", f));
+
+// muniscan digital-surface index, joined by name; ids claimed by two entries are dropped as ambiguous.
+const muniscan: { nombre: string; indice: number }[] = (
+  await Bun.file("data/raw/muniscan-2026-08-21.json").json()
+).municipalidades;
+const geo = {
+  dist,
+  prov: fc("prov").features.map((f) => shape("prov", f)),
+  dep: fc("dep").features.map((f) => shape("dep", f)),
+};
+const claims = new Map<string, number[]>();
+for (const m of muniscan) {
+  const id = matchMunicipality(m.nombre, geo);
+  if (id) claims.set(id, [...(claims.get(id) ?? []), m.indice]);
+}
+for (const d of dist) {
+  const c = claims.get(d.id);
+  if (c?.length === 1) d.digital = c[0];
+}
+// Jev categories per investment project. An answer below this probability counts as unsure; 0.97 is
+// the threshold that caught every ambiguous case in the Jev confidence spike (gradual-formats, slice 2).
+const SURE = 0.97;
+const jev = new Map<string, { c: string; p: Record<string, number> | null }>();
+const jevFile = Bun.file("data/raw/jev-projects.jsonl");
+if (await jevFile.exists()) {
+  for (const line of (await jevFile.text()).split("\n")) {
+    if (!line) continue;
+    const r = JSON.parse(line);
+    jev.set(r.k, r);
+  }
+}
+const projects: { ub: string; name: string; pim: number }[] = jev.size
+  ? await Bun.file("data/raw/mef-projects-2024.json").json()
+  : [];
+const mixes = new Map<string, NonNullable<Shape["mix"]>>();
+for (const p of projects) {
+  if (p.pim <= 0) continue;
+  const m = mixes.get(p.ub) ?? { ornato: 0, deporte: 0, local: 0, unsure: 0 };
+  const a = jev.get(projectKey(p.name));
+  const top = a ? (a.p?.[a.c] ?? 1) : 0;
+  if (!a || top < SURE) m.unsure += p.pim;
+  else if (a.c === "ornato") m.ornato += p.pim;
+  else if (a.c === "deporte") m.deporte += p.pim;
+  else if (a.c === "local_municipal") m.local += p.pim;
+  mixes.set(p.ub, m);
+}
+const roundMix = (m: NonNullable<Shape["mix"]>) => ({
+  ornato: Math.round(m.ornato),
+  deporte: Math.round(m.deporte),
+  local: Math.round(m.local),
+  unsure: Math.round(m.unsure),
+});
+for (const d of dist) {
+  const m = mixes.get(d.id);
+  if (m && d.inv) d.mix = roundMix(m);
+}
+
 // Provinces and departments sum their local governments (the provincial municipality sits in its capital district).
 const rollup = (id: string) => {
+  const scanned = dist.flatMap((d) =>
+    d.id.startsWith(id) && d.digital !== undefined ? [d.digital] : [],
+  );
+  const digital = scanned.length
+    ? {
+        digital:
+          Math.round(
+            (scanned.reduce((t, v) => t + v, 0) / scanned.length) * 10,
+          ) / 10,
+      }
+    : {};
   const kids = dist.filter((d) => d.id.startsWith(id) && d.inv);
-  if (!kids.length) return {};
+  if (!kids.length) return digital;
+  const mixed = kids.filter((d) => d.mix);
+  const sum = (k: keyof NonNullable<Shape["mix"]>) =>
+    mixed.reduce((t, d) => t + (d.mix?.[k] ?? 0), 0);
   return {
+    ...digital,
+    ...(mixed.length
+      ? {
+          mix: {
+            ornato: sum("ornato"),
+            deporte: sum("deporte"),
+            local: sum("local"),
+            unsure: sum("unsure"),
+          },
+        }
+      : {}),
     inv: {
       pim: kids.reduce((t, d) => t + (d.inv?.pim ?? 0), 0),
       dev: kids.reduce((t, d) => t + (d.inv?.dev ?? 0), 0),
@@ -148,7 +239,9 @@ const out = {
 const json = JSON.stringify(out);
 await Bun.write("public/data/shapes.json", json);
 const matched = out.dist.filter((d) => "inv" in d).length;
-const unmatched = [...byUbigeo.keys()].filter((k) => !out.dist.some((d) => d.id === k));
+const unmatched = [...byUbigeo.keys()].filter(
+  (k) => !out.dist.some((d) => d.id === k),
+);
 console.log(`MEF ubigeos without an IGN 2020 district: ${unmatched.length}`);
 console.log(
   `dep ${out.dep.length} · prov ${out.prov.length} · dist ${out.dist.length} · inv matched ${matched} · ${(json.length / 1e6).toFixed(2)} MB`,

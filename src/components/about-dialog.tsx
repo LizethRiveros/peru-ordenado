@@ -109,6 +109,35 @@ export function AboutDialog({
           </section>
 
           <section className="flex flex-col gap-1.5 text-sm leading-relaxed text-foreground/85">
+            <h3 className="font-medium text-foreground">Ornato, con Jev</h3>
+            <p>
+              Jev, un modelo de evaluación, leyó el nombre de cada proyecto de
+              inversión municipal 2024 y lo clasificó como ornato (plazas,
+              parques, arcos, monumentos), deporte, local municipal u otro. Si
+              su respuesta llegó con menos de 97% de probabilidad, esa inversión
+              cuenta como insegura y la forma se ve más transparente. Es una
+              lectura del nombre, no una auditoría de la obra.
+            </p>
+          </section>
+
+          <section className="flex flex-col gap-1.5 text-sm leading-relaxed text-foreground/85">
+            <h3 className="font-medium text-foreground">Superficie digital</h3>
+            <p>
+              El índice de{" "}
+              <a
+                href="https://muniscan.crafter.ing"
+                target="_blank"
+                rel="noreferrer"
+                className="text-accent underline underline-offset-4"
+              >
+                muniscan
+              </a>{" "}
+              (corrida del 21 de agosto de 2026), unido por nombre de
+              municipalidad. Los nombres ambiguos quedan sin datos.
+            </p>
+          </section>
+
+          <section className="flex flex-col gap-1.5 text-sm leading-relaxed text-foreground/85">
             <h3 className="font-medium text-foreground">Quién lo hace</h3>
             <p>
               <a
