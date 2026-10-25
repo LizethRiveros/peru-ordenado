@@ -274,10 +274,10 @@ export function Explorer() {
         <div className="pointer-events-none absolute inset-x-0 bottom-14 z-10 flex justify-center px-4">
           <div className="glass glass-border animate-in pointer-events-auto flex max-w-[26rem] flex-col gap-3 rounded-3xl p-4">
             <p className="text-[13.5px] leading-snug text-foreground">
-              <strong className="font-medium">Este es el Perú desarmado.</strong>{" "}
-              Cada pieza es un distrito, una provincia o un departamento, al
-              tamaño que tiene de verdad. Busca el tuyo y fíjate cuánto gastó
-              en obras, si le llega el 4G y cuántas emergencias tuvo.
+              <strong className="font-medium">Cada pieza es un lugar real.</strong>{" "}
+              Un distrito, una provincia o un departamento, dibujado a su
+              tamaño. Escribe dónde vives y mira cuánto gastó tu municipalidad,
+              si ahí llega el 4G y cuántas emergencias vivieron.
             </p>
             <div className="flex gap-2">
               <button
@@ -285,14 +285,17 @@ export function Explorer() {
                 onClick={() => goTo(0)}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-foreground px-3 py-2 text-[13px] font-medium text-background transition hover:opacity-90"
               >
-                <PlayIcon /> Verlo en un minuto
+                <PlayIcon /> Recorrido de 1 min
               </button>
               <button
                 type="button"
-                onClick={() => setTouched(true)}
+                onClick={() => {
+                  setTouched(true);
+                  document.getElementById("lugar")?.focus();
+                }}
                 className="flex-1 rounded-xl border border-border px-3 py-2 text-[13px] transition hover:border-foreground/30"
               >
-                Explorar yo
+                Buscar mi distrito
               </button>
             </div>
           </div>
@@ -323,9 +326,8 @@ export function Explorer() {
               Qui<em className="font-light">pu</em>
             </h1>
             <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
-              Así se ve el Perú si lo desarmas: cada pieza es un departamento,
-              una provincia o un distrito, con el tamaño que tiene de verdad.
-              Cambia la pregunta y mira quién queda arriba.
+              Tu municipalidad tiene plata para hacer obras. Aquí ves cuánta ya
+              gastó, distrito por distrito, y cómo le va frente a los demás.
             </p>
             {headline && (
               <div className="mt-5 max-w-sm">
@@ -338,11 +340,12 @@ export function Explorer() {
                   </span>
                 </p>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
-                  ya se gastaron en obras de los municipios de{" "}
-                  {depName ?? "todo el Perú"} este año.
+                  es lo que han gastado los municipios de{" "}
+                  {depName ?? "todo el Perú"} de su plata para obras este año.
                   {depName && headline.all
-                    ? ` En el país: ${headline.all.replace(" de cada 100", "")}.`
-                    : ""}
+                    ? ` El país va en ${headline.all.replace(" de cada 100", "")}.`
+                    : ""}{" "}
+                  ¿Y el tuyo?
                 </p>
               </div>
             )}
