@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6eddf;--fg:#3a2a1c;--muted:#7a6552;--accent:#b5522b;--surface:#fbf6ec;--line:rgba(58,42,28,.14)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:var(--bg)}
+body{font-family:Inter,sans-serif;color:var(--fg);-webkit-font-smoothing:antialiased}
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:radial-gradient(120% 80% at 50% 0%,#fbf3e6,#f6eddf 60%,#efe2cc)}
+.abs{position:absolute}
+.mono{font-family:'JetBrains Mono',monospace}
+#brand{left:72px;top:84px;display:flex;align-items:center;gap:18px;font:600 36px Inter;letter-spacing:.01em}
+#cordline{left:0;top:176px;width:1080px;height:80px}
+.card{background:var(--surface);border-radius:56px;border:1px solid var(--line);box-shadow:0 40px 90px -36px rgba(80,50,20,.35),inset 0 1px 0 rgba(255,255,255,.8)}
+#composer{left:72px;top:300px;width:936px;height:150px;padding:36px 44px}
+#q{font:400 46px/78px Inter;height:78px;white-space:nowrap;overflow:hidden;padding-right:110px}
+.cur{display:inline-block;width:.5em;height:1em;background:var(--accent);vertical-align:-.12em;margin-left:4px}
+#send{position:absolute;right:30px;top:30px;width:90px;height:90px;border-radius:32px;background:var(--fg);display:grid;place-items:center}
+#card{left:72px;top:492px;width:936px;height:1300px}
+#eb{position:absolute;left:56px;top:48px;font:500 24px 'JetBrains Mono';letter-spacing:.12em;text-transform:uppercase;color:var(--accent);white-space:nowrap}
+#map{position:absolute;left:28px;top:92px}
+#dist{position:absolute;left:28px;top:92px}
+#big{position:absolute;left:56px;top:900px;font:300 200px/1 Fraunces;letter-spacing:-.03em;color:var(--accent);font-variant-numeric:lining-nums tabular-nums}
+#unit{position:absolute;left:56px;top:1118px;width:820px;font:400 38px/1.3 Inter;color:var(--fg)}
+#sub{position:absolute;left:56px;top:1214px;width:830px;font:400 28px/1.4 'JetBrains Mono';color:var(--muted)}
+#cap{position:absolute;left:56px;top:930px;width:830px;font:300 84px/1.1 Fraunces;letter-spacing:-.02em}
+#cap i{color:var(--accent)}
+#cap2{position:absolute;left:56px;top:1190px;width:830px;font:400 26px/1.4 'JetBrains Mono';color:var(--muted);letter-spacing:.03em}
+#end{inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#end-name{font:300 230px/1 Fraunces;letter-spacing:-.03em;margin-top:30px}
+#end-name i{color:var(--accent)}
+#end-tag{font:400 48px/1.35 Inter;max-width:840px;margin-top:34px}
+#end-tag b{color:var(--accent);font-weight:600}
+#end-url{font:500 32px 'JetBrains Mono';color:var(--accent);margin-top:60px;height:46px;white-space:nowrap}
+#end-by{font:400 24px/1.6 'JetBrains Mono';color:var(--muted);margin-top:34px;letter-spacing:.04em;max-width:860px}
+</style></head><body>
+<div id="stage">
+  <svg id="cordline" class="abs" viewBox="0 0 1080 80"></svg>
+  <div id="brand" class="abs"><svg id="mark" width="46" height="46" viewBox="0 0 24 24"><path d="M3 4.5h18" stroke="#b5522b" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M7 4.5v8M12 4.5v13M17 4.5v5" stroke="#b5522b" stroke-width="1.3" stroke-linecap="round" fill="none"/><circle cx="7" cy="13" r="1.8" fill="#b5522b"/><circle cx="12" cy="18" r="1.8" fill="#b5522b"/><circle cx="17" cy="10" r="1.8" fill="#b5522b"/></svg><span>quipu</span></div>
+  <div id="composer" class="abs card"><div id="q"></div><div id="send"><svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#f6eddf" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div></div>
+  <div id="card" class="abs card">
+    <div id="eb"></div>
+    <svg id="map" width="880" height="780" viewBox="0 0 880 780"></svg>
+    <svg id="dist" width="880" height="780" viewBox="0 0 880 780"></svg>
+    <div id="big"></div><div id="unit"></div><div id="sub"></div>
+    <div id="cap"></div><div id="cap2"></div>
+  </div>
+  <div id="end" class="abs">
+    <svg id="endmark" width="260" height="200" viewBox="0 0 260 200"></svg>
+    <div id="end-name">Qui<i>pu</i></div>
+    <div id="end-tag">Mira cuánto gastó <b>tu distrito</b>.<br>Compártelo.</div>
+    <div id="end-url"></div>
+    <div id="end-by">Datos abiertos del MEF, OSIPTEL, PCM e INGEMMET.<br>Inspirado en «Taxonomía territorial del Perú», de Cristian Yarasca.</div>
+  </div>
+</div>
+<script>
+const D = __DATA__;
+const DURATION = 29.6;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const ease = (x) => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const lerp = (a, b, k) => a + (b - a) * k;
+const $ = (id) => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+
+// ---- typing (and its keyboard clicks, reported to the audio script) ----
+const CLICKS = [];
+const pseudo = (i) => ((i * 7919) % 13) / 13;
+function typer(start, text, cps) {
+  const chars = [...text]; const times = []; let tt = start;
+  chars.forEach((c, i) => { times.push(tt); CLICKS.push({ t: +tt.toFixed(3), s: c === " " }); tt += (1 / cps) * (.7 + .6 * pseudo(i)); });
+  return { start, end: tt, at: (t) => chars.slice(0, times.filter((x) => x <= t).length).join("") };
+}
+const T = [
+  { from: 0.9, to: 12.7, ty: typer(0.9, "¿Cuánto ha gastado mi distrito?", 11) },
+  { from: 13.0, to: 19.0, ty: typer(13.0, "Acoria", 7) },
+  { from: 20.0, to: 22.3, ty: typer(20.0, "¿Llega la señal 4G?", 14) },
+  { from: 22.6, to: 25.8, ty: typer(22.6, "¿Cuántas emergencias tuvo?", 14) },
+];
+const URLTXT = "peru-ordenado.crafter.ing";
+const urlT = typer(27.4, URLTXT, 20);
+
+// ---- quipu cord under the brand ----
+const cl = $("cordline");
+cl.innerHTML = '<path d="M72 30H1008" stroke="#b5522b" stroke-width="4" stroke-linecap="round" fill="none" opacity=".55"/>';
+const cordKnots = [];
+for (let i = 0; i < 14; i++) {
+  const x = 120 + i * 66, len = 14 + ((i * 37) % 30);
+  const g = document.createElementNS(NS, "g");
+  g.innerHTML = `<path d="M${x} 30v${len}" stroke="#b5522b" stroke-width="2.4" fill="none" opacity=".55"/><circle cx="${x}" cy="${30 + len}" r="6" fill="#b5522b" opacity=".8"/>`;
+  cl.appendChild(g); cordKnots.push(g);
+}
+
+// ---- department shapes ----
+const mapSvg = $("map");
+const els = D.deps.map((s) => {
+  const p = document.createElementNS(NS, "path");
+  p.setAttribute("d", s.d); p.setAttribute("stroke", "#fbf6ec"); p.setAttribute("stroke-width", "1.6");
+  p.setAttribute("vector-effect", "non-scaling-stroke"); p.setAttribute("stroke-linejoin", "round");
+  mapSvg.appendChild(p); return p;
+});
+const pos = (s, kind) => (kind === "map" ? s.map : s.grid[kind]);
+const STAGES = [
+  { a: 5.0, b: 6.9, from: "grid:quipu", to: "map", cf: "quipu", ct: "quipu" },
+  { a: 19.2, b: 20.7, from: "map", to: "grid:quipu", cf: "quipu", ct: "quipu" },
+  { a: 21.0, b: 22.4, from: "grid:quipu", to: "grid:cobertura", cf: "quipu", ct: "cobertura" },
+  { a: 23.7, b: 25.1, from: "grid:cobertura", to: "grid:emergencias", cf: "cobertura", ct: "emergencias" },
+];
+const kindOf = (k) => (k === "map" ? "map" : k.split(":")[1]);
+function layoutAt(t) {
+  let from = STAGES[0].from, cf = STAGES[0].cf;
+  for (const st of STAGES) {
+    if (t < st.a) return { from, to: from, k: 0, cf, ct: cf };
+    if (t < st.b) return { from: st.from, to: st.to, k: ease(seg(t, st.a, st.b)), cf: st.cf, ct: st.ct };
+    from = st.to; cf = st.ct;
+  }
+  return { from, to: from, k: 0, cf, ct: cf };
+}
+
+// ---- district shape ----
+const distSvg = $("dist");
+(function () {
+  const [x0, y0, x1, y1] = D.district.bbox, box = 640;
+  const k = Math.min(box / (x1 - x0), box / (y1 - y0));
+  const g = document.createElementNS(NS, "g"); g.id = "distg";
+  const p = document.createElementNS(NS, "path");
+  p.setAttribute("d", D.district.d);
+  p.setAttribute("fill", `rgb(${D.district.col.join(",")})`);
+  p.setAttribute("stroke", "#fbf6ec"); p.setAttribute("stroke-width", "2"); p.setAttribute("vector-effect", "non-scaling-stroke");
+  p.setAttribute("transform", `translate(${(440 - ((x0 + x1) / 2) * k).toFixed(1)} ${(390 - ((y0 + y1) / 2) * k).toFixed(1)}) scale(${k.toFixed(4)})`);
+  g.appendChild(p); distSvg.appendChild(g);
+})();
+
+// ---- closing mark ----
+const em = $("endmark");
+em.innerHTML = '<path d="M20 30H240" stroke="#b5522b" stroke-width="7" stroke-linecap="round" fill="none"/>';
+const endStrings = [];
+[[60, 90], [110, 150], [160, 120], [210, 70]].forEach(([x, len], i) => {
+  const g = document.createElementNS(NS, "g");
+  g.innerHTML = `<path class="st" d="M${x} 30v${len}" stroke="#b5522b" stroke-width="4.5" stroke-linecap="round" fill="none"/><circle class="kn" cx="${x}" cy="${30 + len}" r="12" fill="#b5522b"/>`;
+  em.appendChild(g); endStrings.push({ g, len });
+});
+
+function swap(el, t, list, fade = .45) {
+  let cur = list[0];
+  for (const e of list) if (t >= e.t) cur = e;
+  if (el._txt !== cur.text) { el.textContent = cur.text; el._txt = cur.text; }
+  el.style.opacity = t < cur.t + fade ? ease(seg(t, cur.t, cur.t + fade)) : 1;
+}
+
+const UNIT = "de cada 100 soles de obras municipales ya gastados este año";
+function seek(t) {
+  // brand + cord
+  $("brand").style.opacity = ease(seg(t, 0, .6));
+  cordKnots.forEach((g, i) => { g.style.opacity = ease(seg(t, .2 + i * .04, .7 + i * .04)); });
+  const cardIn = ease(seg(t, 4.4, 5.3)) * (1 - ease(seg(t, 25.8, 26.4)));
+  const compo = ease(seg(t, .4, 1.0)) * (1 - ease(seg(t, 25.8, 26.4)));
+  $("composer").style.opacity = compo;
+  $("composer").style.transform = `translateY(${(1 - ease(seg(t, .4, 1.0))) * 24}px)`;
+  const card = $("card");
+  card.style.opacity = cardIn;
+  card.style.transform = `translateY(${(1 - ease(seg(t, 4.4, 5.3))) * 60}px)`;
+
+  // composer text: the active typer, with a caret
+  let txt = "", caret = true;
+  for (const e of T) if (t >= e.from && t < e.to) txt = e.ty.at(t);
+  $("q").innerHTML = (txt ? txt.replace(/</g, "&lt;") : '<span style="color:#b7a48f">Pregúntale al Perú…</span>') + (Math.floor(t * 2) % 2 === 0 || txt.length ? '<span class="cur"></span>' : "");
+
+  // department shapes
+  const L = layoutAt(t);
+  const showMap = t < 13.8 || t >= 19.0;
+  const mapFade = t < 12.7 ? 1 : t < 13.6 ? 1 - ease(seg(t, 12.7, 13.6)) : t < 19.0 ? 0 : ease(seg(t, 19.0, 19.5));
+  mapSvg.style.opacity = mapFade;
+  const dim = ease(seg(t, 9.7, 10.3)) * (1 - ease(seg(t, 12.2, 12.7)));
+  D.deps.forEach((s, i) => {
+    const A = pos(s, kindOf(L.from)), B = pos(s, kindOf(L.to));
+    const x = lerp(A.x, B.x, L.k), y = lerp(A.y, B.y, L.k), sc = lerp(A.s, B.s, L.k);
+    const [x0, y0, x1, y1] = s.bbox, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+    const feat = s.id === D.dep.id;
+    const pulse = feat ? 1 + .06 * dim : 1;
+    const ca = s.col[L.cf], cb = s.col[L.ct];
+    const c = ca.map((v, j) => Math.round(lerp(v, cb[j], L.k)));
+    els[i].setAttribute("fill", `rgb(${c.join(",")})`);
+    els[i].setAttribute("transform", `translate(${(x - cx * sc * pulse).toFixed(2)} ${(y - cy * sc * pulse).toFixed(2)}) scale(${(sc * pulse).toFixed(4)})`);
+    els[i].style.opacity = feat ? 1 : 1 - dim * .82;
+  });
+
+  // district shape
+  const dIn = ease(seg(t, 13.8, 14.7)) * (1 - ease(seg(t, 18.6, 19.1)));
+  distSvg.style.opacity = dIn;
+  $("distg").setAttribute("transform", `translate(440 390) scale(${lerp(.88, 1, ease(seg(t, 13.8, 14.8)))}) translate(-440 -390)`);
+
+  // eyebrow
+  swap($("eb"), t, [
+    { t: 0, text: "" },
+    { t: 4.6, text: "¿Cuánto lleva gastado este año?" },
+    { t: 9.7, text: D.dep.name },
+    { t: 13.9, text: `${D.district.name} · ${D.district.where}` },
+    { t: 19.2, text: "¿Cuánto lleva gastado?" },
+    { t: 21.0, text: "¿Llega la señal 4G?" },
+    { t: 23.7, text: "¿Cuántas emergencias tuvo?" },
+  ]);
+
+  // big number scenes
+  const big = $("big"), unit = $("unit"), sub = $("sub");
+  let n = null, subtxt = "", on = 0;
+  if (t >= 6.8 && t < 12.8) {
+    on = ease(seg(t, 6.8, 7.3)) * (1 - ease(seg(t, 12.2, 12.8)));
+    const toDep = ease(seg(t, 9.9, 10.9));
+    n = Math.round(lerp(D.country.quipu * ease(seg(t, 6.8, 8.8)), D.dep.quipu, toDep));
+    subtxt = t < 9.9 ? "Todo el Perú, hasta " + D.district.mes : `${D.dep.name} (${D.dep.gentilicio}). El país: ${D.country.quipu}.`;
+  } else if (t >= 14.0 && t < 19.0) {
+    on = ease(seg(t, 14.0, 14.5)) * (1 - ease(seg(t, 18.5, 19.0)));
+    n = Math.round(D.district.quipu * ease(seg(t, 14.2, 16.2)));
+    subtxt = `El año pasado, a esta altura: ${D.district.prev}\nEl país en conjunto: ${D.country.quipu}`;
+  }
+  big.style.opacity = on; unit.style.opacity = on; sub.style.opacity = on * (t >= 9.9 && t < 12.8 || t >= 15.6 ? 1 : t < 9.9 ? 1 : 0);
+  if (n !== null) { big.textContent = n; unit.textContent = UNIT; sub.textContent = subtxt; sub.style.whiteSpace = "pre-line"; }
+
+  // caption while the shapes reorder
+  const capOn = ease(seg(t, 19.6, 20.2)) * (1 - ease(seg(t, 25.4, 25.8)));
+  $("cap").style.opacity = capOn; $("cap2").style.opacity = capOn;
+  $("cap").innerHTML = "Cambia la pregunta.<br><i>Las formas se reordenan.</i>";
+  $("cap2").textContent = "Cada forma es un departamento, a su tamaño real.\nSolo datos abiertos del Estado.";
+  $("cap2").style.whiteSpace = "pre-line";
+
+  // closing
+  const endOn = ease(seg(t, 26.4, 27.1));
+  $("end").style.opacity = endOn;
+  $("end").style.visibility = endOn > 0 ? "visible" : "hidden";
+  $("end-name").style.transform = `scale(${lerp(.94, 1, ease(seg(t, 26.4, 27.4)))})`;
+  endStrings.forEach((e, i) => {
+    const k = ease(seg(t, 26.5 + i * .12, 27.3 + i * .12));
+    e.g.querySelector(".st").setAttribute("d", `M${[60, 110, 160, 210][i]} 30v${(e.len * k).toFixed(1)}`);
+    e.g.querySelector(".kn").setAttribute("cy", (30 + e.len * k).toFixed(1));
+    e.g.querySelector(".kn").style.opacity = k;
+  });
+  $("end-tag").style.opacity = ease(seg(t, 26.9, 27.5));
+  $("end-by").style.opacity = ease(seg(t, 28.3, 28.9));
+  $("end-url").innerHTML = urlT.at(t) + (t > 27.2 && t < 28.8 ? '<span class="cur"></span>' : "");
+}
+window.seek = seek; window.DURATION = DURATION; window.CLICKS = CLICKS;
+seek(0);
+</script></body></html>
