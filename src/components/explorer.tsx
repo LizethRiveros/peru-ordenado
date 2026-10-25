@@ -629,6 +629,18 @@ function PlaceCard({
         {rankText ? `${rankText}. ` : ""}Cada hilo es más largo cuanto más
         arriba queda frente a los demás {LEVELS[level].plural}.
       </p>
+      <details className="group -mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
+        <summary className="cursor-pointer list-none transition hover:text-foreground">
+          ¿Qué mide cada hilo? <span className="inline-block transition group-open:rotate-45">+</span>
+        </summary>
+        <ul className="mt-1.5 flex flex-col gap-1">
+          <li><b className="font-medium text-foreground/80">Gasto:</b> cuánto del presupuesto para obras de este año ya se gastó.</li>
+          <li><b className="font-medium text-foreground/80">Señal 4G:</b> de sus pueblos y caseríos, cuántos tienen señal 4G de celular. Cuenta lugares, no personas.</li>
+          <li><b className="font-medium text-foreground/80">Emergencias:</b> veces que el Gobierno declaró estado de emergencia entre 2017 y 2024.</li>
+          <li><b className="font-medium text-foreground/80">Zonas críticas:</b> zonas con peligro de derrumbes, huaicos o deslizamientos (INGEMMET).</li>
+          <li><b className="font-medium text-foreground/80">Digital:</b> puntos de 0 a 100 de presencia digital de su municipalidad en gob.pe.</li>
+        </ul>
+      </details>
       {other ? (
         <div className="flex flex-col gap-1 border-t border-border pt-3">
           <div className="flex items-center justify-between">
@@ -994,6 +1006,18 @@ function Scrubber({
   );
 }
 
+/** What the colors of each scale count, one line above the bar. */
+const UNIT: Partial<Record<Metric, string>> = {
+  quipu: "Cuánto del presupuesto para obras ya se gastó",
+  ejecucion: "Cuánto del presupuesto para obras se gastó en 2024",
+  inversion: "Presupuesto para obras en 2024",
+  ornato: "Parte de las obras que fue a plazas y monumentos",
+  cobertura: "Parte de los pueblos y caseríos con señal 4G",
+  emergencias: "Estados de emergencia declarados, 2017-2024",
+  zonas: "Zonas críticas por derrumbes y huaicos",
+  digital: "Presencia digital, de 0 a 100 puntos",
+};
+
 function Legend({ metric, shapes }: { metric: Metric; shapes: Shape[] }) {
   if (metric === "area") {
     return (
@@ -1032,18 +1056,18 @@ function Legend({ metric, shapes }: { metric: Metric; shapes: Shape[] }) {
     },
     cobertura: {
       colors: stops.map((t) => coverageColor(t * 0.5)),
-      lo: "0%",
-      hi: "50%+",
+      lo: "0 % con 4G",
+      hi: "50 % o más",
     },
     emergencias: {
       colors: stops.map((t) => countColor(t * 9, 9)),
-      lo: "0",
-      hi: "9+",
+      lo: "0 emergencias",
+      hi: "9 o más",
     },
     zonas: {
       colors: stops.map((t) => countColor(t * 6, 6)),
-      lo: "0",
-      hi: "6+",
+      lo: "0 zonas",
+      hi: "6 o más",
     },
     digital: (() => {
       const r = rangeFor(shapes, "digital");
@@ -1056,6 +1080,11 @@ function Legend({ metric, shapes }: { metric: Metric; shapes: Shape[] }) {
   }[metric];
   return (
     <div className="flex flex-col gap-1.5">
+      {UNIT[metric] && (
+        <p className="text-[11.5px] font-medium text-foreground/80">
+          {UNIT[metric]}
+        </p>
+      )}
       <div
         className="h-2 rounded-full"
         style={{
@@ -1142,9 +1171,9 @@ function sentence(shape: Shape, metric: Metric): string | undefined {
     case "ornato":
       return `${de100(v)} de cada 100 soles de sus obras 2024 fueron para plazas, parques, arcos o monumentos.`;
     case "digital":
-      return `Su municipalidad tiene ${v} puntos de 100 en servicios digitales.`;
+      return `Su municipalidad tiene ${v} puntos de 100 en presencia digital (índice muniscan de lo que declara en gob.pe). Más puntos, más presencia en línea.`;
     case "cobertura":
-      return `${de100(v)} de cada 100 centros poblados (pueblos y caseríos) tienen señal 4G.`;
+      return `${de100(v)} de cada 100 pueblos y caseríos (centros poblados) tienen señal 4G de celular. Cuenta lugares, no personas.`;
     case "emergencias":
       return `Tuvo ${v.toFixed(1)} decretos de emergencia por lluvias o sequía entre 2017 y 2024${shape.terr && shape.terr.emergN > 1 ? ", en promedio por distrito" : ""}.`;
     case "zonas":

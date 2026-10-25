@@ -9,7 +9,7 @@ const UNITS: Partial<Record<Metric, string>> = {
   cobertura: "de cada 100 pueblos tienen señal 4G",
   emergencias: "decretos de emergencia entre 2017 y 2024",
   zonas: "zonas críticas por peligros geológicos",
-  digital: "de 100 en servicios digitales",
+  digital: "puntos de 100 en presencia digital",
 };
 
 /** The one big number for a place and criterion, with what it counts. Falls back to the size. */
