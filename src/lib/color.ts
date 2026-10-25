@@ -1,4 +1,4 @@
-import type { Metric, Shape } from "@/lib/shapes";
+import { type Metric, type Shape, value } from "@/lib/shapes";
 
 // Macro-regions get a hue family, departments a step inside it (north wine, center blue,
 // south amber, east green, Lima and Callao slate), so neighbours stay distinguishable.
@@ -64,6 +64,14 @@ export function ornatoColor(r: number): string {
   return `oklch(${(0.88 - t * 0.42).toFixed(3)} ${(0.03 + t * 0.16).toFixed(3)} ${(80 - t * 85).toFixed(1)})`;
 }
 
+/** Cobertura 4G: 0 → pálido, 50% o más de los centros poblados → azul intenso. */
+export const coverageColor = (r: number) =>
+  digitalColor(20 + Math.min(r / 0.5, 1) * 50);
+
+/** Escala cálida (arena → magenta) para conteos: `full` o más satura. */
+export const countColor = (v: number, full: number) =>
+  ornatoColor((Math.min(v / full, 1) * 0.3));
+
 /** muniscan index on a slate → electric blue ramp over 20–70, where nearly every score falls. */
 export function digitalColor(v: number): string {
   const t = Math.max(0, Math.min(1, (v - 20) / 50));
@@ -79,6 +87,13 @@ export function colorFor(
   if (metric === "area") return departmentColor(shape, jitter);
   if (metric === "digital")
     return shape.digital === undefined ? NO_DATA : digitalColor(shape.digital);
+  if (metric === "cobertura" || metric === "emergencias" || metric === "zonas") {
+    const v = value(shape, metric);
+    if (v === undefined) return NO_DATA;
+    return metric === "cobertura"
+      ? coverageColor(v)
+      : countColor(v, metric === "emergencias" ? 9 : 6);
+  }
   if (metric === "ornato")
     return shape.mix && shape.inv?.pim
       ? ornatoColor(shape.mix.ornato / shape.inv.pim)

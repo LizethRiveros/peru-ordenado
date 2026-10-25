@@ -6,6 +6,8 @@ import { SiteHeader } from "@/components/site-header";
 import { Stage, sortShapes, valueLabel } from "@/components/stage";
 import {
   budgetColor,
+  countColor,
+  coverageColor,
   digitalColor,
   executionColor,
   NO_DATA,
@@ -601,6 +603,21 @@ function Legend({ metric, shapes }: { metric: Metric; shapes: Shape[] }) {
       lo: "0%",
       hi: "30%+",
     },
+    cobertura: {
+      colors: stops.map((t) => coverageColor(t * 0.5)),
+      lo: "0%",
+      hi: "50%+",
+    },
+    emergencias: {
+      colors: stops.map((t) => countColor(t * 9, 9)),
+      lo: "0",
+      hi: "9+",
+    },
+    zonas: {
+      colors: stops.map((t) => countColor(t * 6, 6)),
+      lo: "0",
+      hi: "6+",
+    },
     digital: {
       colors: stops.map((t) => digitalColor(20 + t * 50)),
       lo: "≤20",
@@ -727,6 +744,58 @@ function Tooltip({
             <dd className="text-right text-muted-foreground">sin datos</dd>
           </>
         )}
+        {shape.terr ? (
+          <>
+            {shape.terr.cp > 0 && (
+              <>
+                <dt
+                  className={
+                    metric === "cobertura"
+                      ? "text-foreground"
+                      : "text-muted-foreground"
+                  }
+                >
+                  Centros poblados con 4G
+                </dt>
+                <dd className="text-right font-mono">
+                  {pct(shape.terr.cp4g / shape.terr.cp)}
+                </dd>
+              </>
+            )}
+            {shape.terr.emergN > 0 && (
+              <>
+                <dt
+                  className={
+                    metric === "emergencias"
+                      ? "text-foreground"
+                      : "text-muted-foreground"
+                  }
+                >
+                  Decretos de emergencia
+                </dt>
+                <dd className="text-right font-mono">
+                  {(shape.terr.emerg / shape.terr.emergN).toFixed(1)}
+                </dd>
+              </>
+            )}
+            {shape.terr.zonasN > 0 && (
+              <>
+                <dt
+                  className={
+                    metric === "zonas"
+                      ? "text-foreground"
+                      : "text-muted-foreground"
+                  }
+                >
+                  Zonas críticas
+                </dt>
+                <dd className="text-right font-mono">
+                  {(shape.terr.zonas / shape.terr.zonasN).toFixed(1)}
+                </dd>
+              </>
+            )}
+          </>
+        ) : null}
         {shape.mix && shape.inv?.pim ? (
           <>
             <dt

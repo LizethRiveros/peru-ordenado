@@ -7,6 +7,19 @@ export type Shape = {
   d: string;
   /** Local-government investment (genérica 2.6), soles. Absent when MEF reports no budget. */
   inv?: { pim: number; dev: number };
+  /**
+   * Territorio (OSIPTEL, PCM, INGEMMET): centros poblados con y sin 4G, declaratorias de emergencia
+   * 2017-2024 y zonas críticas inventariadas. `emerg`/`zonas` son sumas sobre `emergN`/`zonasN` distritos,
+   * para poder promediar en provincias y departamentos.
+   */
+  terr?: {
+    cp: number;
+    cp4g: number;
+    emerg: number;
+    emergN: number;
+    zonas: number;
+    zonasN: number;
+  };
   /** muniscan digital-surface index 0–100 (provinces and departments: mean of their districts). */
   digital?: number;
   /**
@@ -24,7 +37,12 @@ export type Dataset = {
   sources: { geo: string; spend: string };
 } & Record<Level, Shape[]>;
 
-export type Metric = "area" | "inversion" | "ejecucion" | "ornato" | "digital";
+export type Metric = "area" | "inversion" | "ejecucion"
+  | "ornato"
+  | "digital"
+  | "cobertura"
+  | "emergencias"
+  | "zonas";
 
 export const LEVELS: Record<Level, { label: string; plural: string }> = {
   dep: { label: "Departamento", plural: "departamentos" },
@@ -51,6 +69,20 @@ export const METRICS: Record<Metric, { label: string; title: string }> = {
     label: "Superficie digital",
     title: "ordenados por índice de superficie digital municipal (muniscan)",
   },
+  cobertura: {
+    label: "Cobertura 4G",
+    title: "ordenados por % de centros poblados con señal 4G",
+  },
+  emergencias: {
+    label: "Emergencias por lluvias y sequía",
+    title:
+      "ordenados por decretos de emergencia 2017-2024 (promedio por distrito)",
+  },
+  zonas: {
+    label: "Zonas críticas",
+    title:
+      "ordenados por zonas críticas por peligros geológicos (promedio por distrito inventariado)",
+  },
 };
 
 export const SOURCE: Record<Metric, string> = {
@@ -59,6 +91,9 @@ export const SOURCE: Record<Metric, string> = {
   ejecucion: "MEF 2024",
   ornato: "MEF + Jev",
   digital: "muniscan",
+  cobertura: "OSIPTEL",
+  emergencias: "PCM",
+  zonas: "INGEMMET",
 };
 
 /** The parent id one level up: districts belong to provinces, provinces to departments. */
@@ -77,6 +112,12 @@ export function certainty(shape: Shape): number {
 export function value(shape: Shape, metric: Metric): number | undefined {
   if (metric === "area") return shape.area;
   if (metric === "digital") return shape.digital;
+  if (metric === "cobertura")
+    return shape.terr?.cp ? shape.terr.cp4g / shape.terr.cp : undefined;
+  if (metric === "emergencias")
+    return shape.terr?.emergN ? shape.terr.emerg / shape.terr.emergN : undefined;
+  if (metric === "zonas")
+    return shape.terr?.zonasN ? shape.terr.zonas / shape.terr.zonasN : undefined;
   if (metric === "ornato")
     return shape.mix && shape.inv?.pim
       ? shape.mix.ornato / shape.inv.pim
