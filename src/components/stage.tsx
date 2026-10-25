@@ -78,6 +78,7 @@ export function Stage({
   metric,
   label,
   highlight,
+  allNames = false,
   onHover,
 }: {
   data: Dataset;
@@ -87,6 +88,8 @@ export function Stage({
   label: string;
   /** Ids at the current level to ring and call out, used by the story. */
   highlight?: string[];
+  /** Name every shape in the sorted view, shrinking them until the names fit. */
+  allNames?: boolean;
   onHover: (
     hit: { shape: Shape; level: Level; x: number; y: number } | null,
   ) => void;
@@ -116,7 +119,7 @@ export function Stage({
       const shapes = data[lvl];
       return vw === "mapa"
         ? mapLayout(shapes, size.current)
-        : gridLayout(sortShapes(shapes, m), size.current);
+        : gridLayout(sortShapes(shapes, m), size.current, allNames);
     };
 
     const retarget = (

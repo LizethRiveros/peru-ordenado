@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  Fragment,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { AboutDialog } from "@/components/about-dialog";
 import { SiteHeader } from "@/components/site-header";
 import { Stage, sortShapes, valueLabel } from "@/components/stage";
@@ -41,6 +49,7 @@ export function Explorer() {
     view: "mapa",
     metric: "area",
   });
+  const [allNames, setAllNames] = useState(false);
   const [hit, setHit] = useState<Hit | null>(null);
   const [video, setVideo] = useState(false);
   const [step, setStep] = useState<number | null>(null);
@@ -52,6 +61,7 @@ export function Explorer() {
     const q = new URLSearchParams(window.location.search);
     const rest = parseSelection(q);
     const v = q.has("video");
+    setAllNames(q.get("nombres") === "todos");
     setSel((s) => ({
       ...s,
       ...Object.fromEntries(Object.entries(rest).filter(([, x]) => x)),
@@ -71,8 +81,10 @@ export function Explorer() {
     q.set("orden", sel.metric);
     if (sel.dep) q.set("dep", sel.dep);
     else q.delete("dep");
+    if (allNames) q.set("nombres", "todos");
+    else q.delete("nombres");
     window.history.replaceState(null, "", `?${q}`);
-  }, [sel, ready]);
+  }, [sel, ready, allNames]);
 
   const story = useMemo(() => (data ? buildStory(data) : []), [data]);
 
@@ -129,6 +141,9 @@ export function Explorer() {
   }, [data]);
 
   const depName = sel.dep ? names.get(sel.dep) : undefined;
+  // Naming every district of the country cannot fit; one department (or provinces, departments) can.
+  const canNameAll = sel.view === "ordenado" && (sel.level !== "dist" || !!sel.dep);
+  const namesAll = allNames && canNameAll;
 
   const stage = (
     <section
@@ -160,7 +175,8 @@ export function Explorer() {
       >
         {scope ? (
           <Stage
-            key={sel.dep ?? "peru"}
+            key={`${sel.dep ?? "peru"}-${namesAll}`}
+            allNames={namesAll}
             data={scope}
             level={sel.level}
             view={sel.view}
@@ -280,6 +296,21 @@ export function Explorer() {
                     </option>
                   ))}
               </select>
+            </Field>
+            <Field label="Nombres">
+              <Segmented
+                value={namesAll ? "todos" : "algunos"}
+                options={[
+                  ["algunos", "Los grandes"],
+                  ["todos", "Todos"],
+                ]}
+                onChange={(v) => {
+                  if (v === "todos" && !canNameAll) {
+                    choose({ view: "ordenado", level: sel.level === "dist" && !sel.dep ? "prov" : sel.level });
+                  }
+                  setAllNames(v === "todos");
+                }}
+              />
             </Field>
             <Field label="Ordenar y colorear por">
               <div className="flex flex-col gap-1.5">
@@ -729,6 +760,58 @@ function Extremes({
   );
 }
 
+const de100 = (r: number) => Math.round(r * 100);
+
+/** Lo que dice la forma según el criterio elegido, en una frase. Sin dato, no hay frase. */
+function sentence(shape: Shape, metric: Metric): string | undefined {
+  const v = value(shape, metric);
+  if (metric === "area") return `Mide ${km2(shape.area)}.`;
+  if (v === undefined) return undefined;
+  switch (metric) {
+    case "inversion":
+      return `Tenía ${soles(shape.inv?.pim ?? 0)} para obras en 2024.`;
+    case "ejecucion":
+      return `En 2024 gastó ${de100(v)} de cada 100 soles que tenía para obras.`;
+    case "quipu": {
+      const a = shape.avance;
+      const antes =
+        a && a.pimPrev > 0
+          ? ` A esta altura del año pasado iba en ${de100(a.devPrev / a.pimPrev)}.`
+          : "";
+      return `En lo que va del año gastó ${de100(v)} de cada 100 soles que tiene para obras.${antes}`;
+    }
+    case "ornato":
+      return `${de100(v)} de cada 100 soles de sus obras 2024 fueron para plazas, parques, arcos o monumentos.`;
+    case "digital":
+      return `Su municipalidad saca ${v} de 100 en servicios digitales.`;
+    case "cobertura":
+      return `${de100(v)} de cada 100 centros poblados (pueblos y caseríos) tienen señal 4G.`;
+    case "emergencias":
+      return `Tuvo ${v.toFixed(1)} decretos de emergencia por lluvias o sequía entre 2017 y 2024${shape.terr && shape.terr.emergN > 1 ? ", en promedio por distrito" : ""}.`;
+    case "zonas":
+      return `Tiene ${v.toFixed(1)} zonas críticas por peligros geológicos (derrumbes, huaicos, deslizamientos)${shape.terr && shape.terr.zonasN > 1 ? ", en promedio por distrito inventariado" : ""}.`;
+  }
+}
+
+/** Datos sueltos de la forma, con nombres claros. Lo que no tiene dato no aparece. */
+function details(shape: Shape, metric: Metric): [string, string][] {
+  const rows: [Metric | null, string, string | undefined][] = [
+    ["area", "Superficie", km2(shape.area)],
+    ["inversion", "Presupuesto para obras 2024", shape.inv ? soles(shape.inv.pim) : undefined],
+    ["ejecucion", "Gastado de ese presupuesto", shape.inv?.pim ? pct(shape.inv.dev / shape.inv.pim) : undefined],
+    ["quipu", "Gastado este año", shape.avance?.pim ? pct(shape.avance.dev / shape.avance.pim) : undefined],
+    [null, "Mismo punto del año pasado", shape.avance && shape.avance.pimPrev > 0 ? pct(shape.avance.devPrev / shape.avance.pimPrev) : undefined],
+    ["cobertura", "Centros poblados con 4G", shape.terr?.cp ? pct(shape.terr.cp4g / shape.terr.cp) : undefined],
+    ["emergencias", "Decretos de emergencia", shape.terr?.emergN ? (shape.terr.emerg / shape.terr.emergN).toFixed(1) : undefined],
+    ["zonas", "Zonas críticas", shape.terr?.zonasN ? (shape.terr.zonas / shape.terr.zonasN).toFixed(1) : undefined],
+    ["ornato", "Obras en plazas, parques y arcos", shape.mix && shape.inv?.pim ? pct(shape.mix.ornato / shape.inv.pim) : undefined],
+    ["digital", "Servicios digitales", shape.digital !== undefined ? `${shape.digital}/100` : undefined],
+  ];
+  return rows.flatMap(([m, label, v]) =>
+    v === undefined || (m !== null && m === metric) ? [] : [[label, v] as [string, string]],
+  );
+}
+
 function Tooltip({
   hit,
   metric,
@@ -745,161 +828,61 @@ function Tooltip({
   ]
     .filter(Boolean)
     .join(", ");
-  const left = hit.x > 220 ? hit.x - 212 : hit.x + 16;
+  const left = hit.x > 260 ? hit.x - 264 : hit.x + 16;
+  const card = useRef<HTMLDivElement>(null);
+  const main = sentence(shape, metric);
+  const rows = details(shape, metric);
+  const unsure = metric === "ornato" && shape.mix && shape.inv?.pim ? certainty(shape) : 1;
+  // The card grows with the data it has: keep it inside the panel.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-run on every hover move and metric change
+  useLayoutEffect(() => {
+    const el = card.current;
+    const panel = el?.closest("section");
+    const origin = el?.offsetParent;
+    if (!el || !panel || !origin) return;
+    const room =
+      panel.getBoundingClientRect().bottom -
+      origin.getBoundingClientRect().top -
+      el.offsetHeight -
+      8;
+    el.style.top = `${Math.max(0, Math.min(hit.y - 24, room))}px`;
+  }, [hit.x, hit.y, hit.shape.id, metric]);
   return (
     <div
-      className="glass glass-solid pointer-events-none absolute z-20 w-[196px] rounded-2xl p-3 text-[12px]"
+      ref={card}
+      className="glass glass-solid pointer-events-none absolute z-20 w-[248px] rounded-2xl p-3.5 text-[12px]"
       style={{ left, top: Math.max(0, hit.y - 24) }}
     >
       <p className="text-[10.5px] tracking-[0.06em] text-muted-foreground uppercase">
         {LEVELS[level].label}
       </p>
-      <p className="font-display text-[17px] leading-tight">{shape.name}</p>
-      {where && <p className="text-[11px] text-muted-foreground">{where}</p>}
+      <p className="font-display text-[19px] leading-tight">{shape.name}</p>
+      {where && <p className="text-[11.5px] text-muted-foreground">{where}</p>}
       {shape.gentilicio && (
-        <p className="text-[11px] text-muted-foreground italic">
+        <p className="text-[11.5px] text-muted-foreground italic">
           Gentilicio: {shape.gentilicio}
         </p>
       )}
-      <dl className="mt-2 grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5">
-        <dt className="text-muted-foreground">Área</dt>
-        <dd className="text-right font-mono">{km2(shape.area)}</dd>
-        {shape.inv ? (
-          <>
-            <dt className="text-muted-foreground">Inversión (PIM)</dt>
-            <dd className="text-right font-mono">{soles(shape.inv.pim)}</dd>
-            <dt className="text-muted-foreground">Ejecutado</dt>
-            <dd className="text-right font-mono">{soles(shape.inv.dev)}</dd>
-            <dt
-              className={
-                metric === "ejecucion"
-                  ? "text-foreground"
-                  : "text-muted-foreground"
-              }
-            >
-              Avance
-            </dt>
-            <dd className="text-right font-mono">
-              {pct(shape.inv.dev / shape.inv.pim)}
-            </dd>
-          </>
-        ) : (
-          <>
-            <dt className="text-muted-foreground">Inversión</dt>
-            <dd className="text-right text-muted-foreground">sin datos</dd>
-          </>
-        )}
-        {shape.avance?.pim ? (
-          <>
-            <dt
-              className={
-                metric === "quipu" ? "text-foreground" : "text-muted-foreground"
-              }
-            >
-              Avance 2026
-            </dt>
-            <dd className="text-right font-mono">
-              {pct(shape.avance.dev / shape.avance.pim)}
-            </dd>
-            {shape.avance.pimPrev > 0 && (
-              <>
-                <dt className="text-muted-foreground">Mismo mes 2025</dt>
-                <dd className="text-right font-mono">
-                  {pct(shape.avance.devPrev / shape.avance.pimPrev)}
-                </dd>
-              </>
-            )}
-          </>
-        ) : null}
-        {shape.terr ? (
-          <>
-            {shape.terr.cp > 0 && (
-              <>
-                <dt
-                  className={
-                    metric === "cobertura"
-                      ? "text-foreground"
-                      : "text-muted-foreground"
-                  }
-                >
-                  Centros poblados con 4G
-                </dt>
-                <dd className="text-right font-mono">
-                  {pct(shape.terr.cp4g / shape.terr.cp)}
-                </dd>
-              </>
-            )}
-            {shape.terr.emergN > 0 && (
-              <>
-                <dt
-                  className={
-                    metric === "emergencias"
-                      ? "text-foreground"
-                      : "text-muted-foreground"
-                  }
-                >
-                  Decretos de emergencia
-                </dt>
-                <dd className="text-right font-mono">
-                  {(shape.terr.emerg / shape.terr.emergN).toFixed(1)}
-                </dd>
-              </>
-            )}
-            {shape.terr.zonasN > 0 && (
-              <>
-                <dt
-                  className={
-                    metric === "zonas"
-                      ? "text-foreground"
-                      : "text-muted-foreground"
-                  }
-                >
-                  Zonas críticas
-                </dt>
-                <dd className="text-right font-mono">
-                  {(shape.terr.zonas / shape.terr.zonasN).toFixed(1)}
-                </dd>
-              </>
-            )}
-          </>
-        ) : null}
-        {shape.mix && shape.inv?.pim ? (
-          <>
-            <dt
-              className={
-                metric === "ornato"
-                  ? "text-foreground"
-                  : "text-muted-foreground"
-              }
-            >
-              Ornato
-            </dt>
-            <dd className="text-right font-mono">
-              {pct(shape.mix.ornato / shape.inv.pim)}
-            </dd>
-            <dt className="text-muted-foreground">Deporte</dt>
-            <dd className="text-right font-mono">
-              {pct(shape.mix.deporte / shape.inv.pim)}
-            </dd>
-            <dt className="text-muted-foreground">Local municipal</dt>
-            <dd className="text-right font-mono">
-              {pct(shape.mix.local / shape.inv.pim)}
-            </dd>
-            <dt className="text-muted-foreground">Jev seguro</dt>
-            <dd className="text-right font-mono">{pct(certainty(shape))}</dd>
-          </>
-        ) : null}
-        <dt
-          className={
-            metric === "digital" ? "text-foreground" : "text-muted-foreground"
-          }
-        >
-          Superficie digital
-        </dt>
-        <dd className="text-right font-mono">
-          {shape.digital === undefined ? "sin datos" : `${shape.digital}/100`}
-        </dd>
-      </dl>
+      {main && (
+        <p className="mt-2.5 rounded-xl bg-accent/10 px-2.5 py-2 text-[13px] leading-snug text-foreground">
+          {main}
+        </p>
+      )}
+      {unsure < 0.995 && (
+        <p className="mt-1 text-[10.5px] text-muted-foreground">
+          Clasificación automática por el nombre de cada obra, {de100(unsure)} % segura.
+        </p>
+      )}
+      {rows.length > 0 && (
+        <dl className="mt-2.5 grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 text-[11.5px]">
+          {rows.map(([label, v]) => (
+            <Fragment key={label}>
+              <dt className="text-muted-foreground">{label}</dt>
+              <dd className="text-right font-mono">{v}</dd>
+            </Fragment>
+          ))}
+        </dl>
+      )}
     </div>
   );
 }
