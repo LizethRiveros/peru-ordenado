@@ -33,6 +33,28 @@ body{font-family:Inter,sans-serif;color:var(--fg);-webkit-font-smoothing:antiali
 #end-tag b{color:var(--accent);font-weight:600}
 #end-url{font:500 32px 'JetBrains Mono';color:var(--accent);margin-top:60px;height:46px;white-space:nowrap}
 #end-by{font:400 24px/1.6 'JetBrains Mono';color:var(--muted);margin-top:34px;letter-spacing:.04em;max-width:860px}
+
+/* ---- horizontal 1920x1080 ---- */
+html.h,html.h body,html.h #stage{width:1920px;height:1080px}
+.h #brand{left:96px;top:36px}
+.h #cordline{width:1080px;left:840px;top:24px;opacity:.9}
+.h #composer{left:96px;top:130px;width:1728px;height:130px;padding:26px 44px}
+.h #q{font-size:44px;line-height:78px;height:78px}
+.h #send{width:80px;height:80px;top:25px;right:28px;border-radius:28px}
+.h #card{left:96px;top:290px;width:1728px;height:730px}
+.h #eb{left:880px;top:56px}
+.h #map,.h #dist{left:40px;top:40px;transform-origin:0 0;transform:scale(.84)}
+.h #big{left:880px;top:130px;font-size:230px}
+.h #unit{left:880px;top:400px;width:780px;font-size:40px}
+.h #sub{left:880px;top:520px;width:780px}
+.h #cap{left:880px;top:200px;width:780px;font-size:92px}
+.h #cap2{left:880px;top:470px;width:780px}
+.h #endmark{width:200px;height:154px}
+.h #end-name{font-size:200px;margin-top:10px}
+.h #end-tag{font-size:44px;max-width:1200px;margin-top:20px}
+.h #end-tag br{display:none}
+.h #end-url{margin-top:36px}
+.h #end-by{margin-top:22px;max-width:1400px}
 </style></head><body>
 <div id="stage">
   <svg id="cordline" class="abs" viewBox="0 0 1080 80"></svg>
@@ -48,12 +70,13 @@ body{font-family:Inter,sans-serif;color:var(--fg);-webkit-font-smoothing:antiali
   <div id="end" class="abs">
     <svg id="endmark" width="260" height="200" viewBox="0 0 260 200"></svg>
     <div id="end-name">Qui<i>pu</i></div>
-    <div id="end-tag">Mira cuánto gastó <b>tu distrito</b>.<br>Compártelo.</div>
+    <div id="end-tag">Mira cuánto gastó <b>tu distrito</b>. <br>Compártelo.</div>
     <div id="end-url"></div>
     <div id="end-by">Datos abiertos del MEF, OSIPTEL, PCM e INGEMMET.<br>Inspirado en «Taxonomía territorial del Perú», de Cristian Yarasca.</div>
   </div>
 </div>
 <script>
+if (location.search.includes("h")) document.documentElement.classList.add("h");
 const D = __DATA__;
 const DURATION = 29.6;
 const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
