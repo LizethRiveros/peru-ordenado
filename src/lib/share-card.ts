@@ -1,12 +1,12 @@
+import type { FichaRow } from "@/lib/ficha";
 import type { Shape } from "@/lib/shapes";
 
 export type CardInput = {
   shape: Shape;
   /** "Provincia, Departamento" under the name. */
   where: string;
-  /** Big figure ("41") and what it counts ("de cada 100 soles ya gastados"). */
-  big: string;
-  unit: string;
+  /** The place's quipu: one thread per layer. */
+  rows: FichaRow[];
   /** One plain sentence with the comparison against the country, if any. */
   line: string;
   question: string;
@@ -89,10 +89,10 @@ export async function renderCard(c: CardInput): Promise<Blob> {
 
   // The shape, at its real proportions.
   const [x0, y0, x1, y1] = c.shape.bbox;
-  const box = 640;
+  const box = 520;
   const k = Math.min(box / (x1 - x0), box / (y1 - y0));
   ctx.save();
-  ctx.translate(W / 2 - ((x0 + x1) / 2) * k, 700 - ((y0 + y1) / 2) * k);
+  ctx.translate(W / 2 - ((x0 + x1) / 2) * k, 650 - ((y0 + y1) / 2) * k);
   ctx.scale(k, k);
   ctx.fillStyle = c.fill;
   ctx.fill(new Path2D(c.shape.d));
@@ -103,24 +103,50 @@ export async function renderCard(c: CardInput): Promise<Blob> {
 
   ctx.textAlign = "center";
   ctx.fillStyle = "#3a2a1c";
-  ctx.font = `500 96px ${display}`;
-  ctx.fillText(c.shape.name, W / 2, 1160);
+  ctx.font = `500 92px ${display}`;
+  ctx.fillText(c.shape.name, W / 2, 1040);
   ctx.fillStyle = "#7a6552";
-  ctx.font = `400 34px ${sans}`;
-  ctx.fillText(c.where, W / 2, 1212);
+  ctx.font = `400 32px ${sans}`;
+  ctx.fillText(c.where, W / 2, 1090);
 
-  ctx.fillStyle = "#b5522b";
-  ctx.font = `600 230px ${display}`;
-  ctx.fillText(c.big, W / 2, 1450);
-  ctx.fillStyle = "#3a2a1c";
-  ctx.font = `500 42px ${sans}`;
-  ctx.fillText(c.unit, W / 2, 1512);
+  // The place as a quipu: a cord, and one thread per layer; the longer the thread, the higher it ranks.
+  const top = 1160;
+  ctx.strokeStyle = "#3a2a1c";
+  ctx.globalAlpha = 0.5;
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(70, top);
+  ctx.lineTo(W - 70, top);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  c.rows.forEach((r, i) => {
+    const x = 150 + i * 195;
+    const len = r.frac === null ? 36 : 60 + r.frac * 280;
+    ctx.strokeStyle = "#3a2a1c";
+    ctx.globalAlpha = 0.5;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, top);
+    ctx.lineTo(x, top + len);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = r.frac === null ? "#c9b8a3" : "#b5522b";
+    ctx.beginPath();
+    ctx.arc(x, top + len, r.frac === null ? 9 : 15, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#3a2a1c";
+    ctx.font = `500 ${r.text === "sin dato" ? 30 : 58}px ${display}`;
+    ctx.fillText(r.text, x, 1580);
+    ctx.fillStyle = "#7a6552";
+    ctx.font = `400 25px ${sans}`;
+    ctx.fillText(r.label, x, 1625);
+  });
 
   ctx.fillStyle = "#5a4636";
-  ctx.font = `400 36px ${sans}`;
-  wrap(ctx, c.line, 860)
-    .slice(0, 3)
-    .forEach((l, i) => ctx.fillText(l, W / 2, 1600 + i * 50));
+  ctx.font = `400 34px ${sans}`;
+  wrap(ctx, c.line, 880)
+    .slice(0, 2)
+    .forEach((l, i) => ctx.fillText(l, W / 2, 1705 + i * 46));
 
   ctx.fillStyle = "#3a2a1c";
   ctx.font = `600 36px ${sans}`;
