@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;1,9..144,300&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6eddf;--fg:#3a2a1c;--muted:#7a6552;--accent:#b5522b;--surface:#fbf6ec;--line:rgba(58,42,28,.14)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{width:1080px;height:1920px;overflow:hidden;background:var(--bg)}
+body{font-family:Inter,sans-serif;color:var(--fg);-webkit-font-smoothing:antialiased}
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden;background:radial-gradient(120% 80% at 50% 0%,#fbf3e6,#f6eddf 60%,#efe2cc)}
+.abs{position:absolute}
+#brand{left:72px;top:72px;display:flex;align-items:center;gap:18px;font:600 36px Inter;letter-spacing:.01em}
+#eb{left:72px;top:150px;font:500 24px 'JetBrains Mono';letter-spacing:.12em;text-transform:uppercase;color:var(--accent);white-space:nowrap}
+#view{left:100px;top:190px;width:880px;height:780px;overflow:hidden}
+#view svg{position:absolute;left:0;top:0}
+#name{left:72px;top:1000px;font:300 128px/1 Fraunces;letter-spacing:-.025em;white-space:nowrap}
+#where{left:76px;top:1142px;font:400 26px 'JetBrains Mono';color:var(--muted);letter-spacing:.03em}
+#q{left:0;top:0;width:1080px;height:1920px}
+.num{position:absolute;font:300 84px/1 Fraunces;letter-spacing:-.02em;color:var(--accent);font-variant-numeric:lining-nums tabular-nums;width:200px;text-align:center}
+.lab{position:absolute;font:500 22px 'JetBrains Mono';letter-spacing:.06em;text-transform:uppercase;color:var(--muted);width:200px;text-align:center}
+#cap{left:72px;top:1790px;width:936px;font:400 36px/1.35 Inter;color:var(--fg);height:100px}
+#cap b{color:var(--accent);font-weight:600}
+#end{inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(120% 80% at 50% 0%,#fbf3e6,#f6eddf 60%,#efe2cc)}
+#end-q{font:300 150px/1.04 Fraunces;letter-spacing:-.03em;max-width:900px}
+#end-q i{color:var(--accent)}
+#field{margin-top:70px;width:780px;height:120px;border-radius:40px;background:var(--surface);border:1px solid var(--line);box-shadow:0 40px 90px -36px rgba(80,50,20,.35),inset 0 1px 0 rgba(255,255,255,.8);display:flex;align-items:center;padding:0 44px;font:400 44px Inter;color:#b7a48f;white-space:nowrap}
+.cur{display:inline-block;width:.5em;height:1em;background:var(--accent);vertical-align:-.12em;margin-left:4px}
+#end-url{font:500 34px 'JetBrains Mono';color:var(--accent);margin-top:56px;height:46px;white-space:nowrap}
+#hook{left:72px;top:1330px;width:936px;font:300 76px/1.1 Fraunces;letter-spacing:-.02em}
+#hook i{color:var(--accent)}
+#credit{font:500 28px/1.4 Inter;color:var(--fg);margin-top:34px}
+#credit b{color:var(--accent);font-weight:600}
+#end-by{font:400 22px/1.6 'JetBrains Mono';color:var(--muted);margin-top:34px;letter-spacing:.04em;max-width:860px}
+
+/* ---- horizontal 1920x1080 ---- */
+html.h,html.h body,html.h #stage{width:1920px;height:1080px}
+.h #brand{left:96px;top:56px}
+.h #eb{left:96px;top:130px}
+.h #view{left:60px;top:190px;width:880px;height:780px}
+.h #name{left:1000px;top:190px;font-size:120px}
+.h #where{left:1004px;top:326px}
+.h #q{width:1920px;height:1080px}
+.h #hook{left:1000px;top:260px;width:820px;font-size:84px}
+.h #credit{margin-top:16px}
+.h #cap{left:1000px;top:960px;width:820px;font-size:32px;height:90px}
+.h #end-q{font-size:130px;max-width:1500px}
+.h #field{margin-top:40px}
+.h #end-url{margin-top:34px}
+.h #end-by{margin-top:20px;max-width:1400px}
+</style></head><body>
+<div id="stage">
+  <div id="brand" class="abs"><svg width="46" height="46" viewBox="0 0 24 24"><path d="M3 4.5h18" stroke="#b5522b" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M7 4.5v8M12 4.5v13M17 4.5v5" stroke="#b5522b" stroke-width="1.3" stroke-linecap="round" fill="none"/><circle cx="7" cy="13" r="1.8" fill="#b5522b"/><circle cx="12" cy="18" r="1.8" fill="#b5522b"/><circle cx="17" cy="10" r="1.8" fill="#b5522b"/></svg><span>quipu</span></div>
+  <div id="eb" class="abs"></div>
+  <div id="view" class="abs"><svg id="cam" width="880" height="780" viewBox="0 0 880 780"><g id="camg"><g id="deps"></g><g id="sibs"></g></g></svg></div>
+  <div id="hook" class="abs"></div>
+  <div id="name" class="abs"></div>
+  <div id="where" class="abs"></div>
+  <svg id="q" class="abs" viewBox="0 0 1080 1920"></svg>
+  <div id="nums"></div>
+  <div id="cap" class="abs"></div>
+  <div id="end" class="abs">
+    <div id="end-q">¿De qué <i>distrito</i> eres?</div>
+    <div id="field"></div>
+    <div id="end-url"></div>
+    <div id="credit">Hecho por <b>Lizeth Riveros</b> para <b>Crafter Research</b></div>
+    <div id="end-by">Datos abiertos del MEF, OSIPTEL, PCM e INGEMMET.<br>Inspirado en «Taxonomía territorial del Perú», de Cristian Yarasca.</div>
+  </div>
+</div>
+<script>
+const H = location.search.includes("h");
+if (H) document.documentElement.classList.add("h");
+const D = __DATA__;
+const DURATION = 27.0;
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const seg = (t, a, b) => clamp((t - a) / (b - a));
+const ease = (x) => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const easeOut = (x) => 1 - Math.pow(1 - clamp(x), 3);
+const lerp = (a, b, k) => a + (b - a) * k;
+const $ = (id) => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const ACC = "#b5522b";
+// Colorful map: a warm-to-cool set of clear colors, one per neighbour, like a printed atlas.
+const PAL = ["#58d68d", "#f5a24a", "#ef6b8f", "#45c4f0", "#b185eb", "#ffd166", "#2ec4b6", "#ff7f50", "#9bd04b", "#5b8def", "#e8646a", "#c75cb0"];
+const PAL_OLD = ["#7fc8a0", "#e8a05a", "#e0736e", "#6fb0d8", "#c79be0", "#f0cf6a", "#5fb7b0", "#d98aa8", "#9bc65a", "#e58a4f", "#8e9ce0", "#c9b38a"];
+const hash = (s) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
+const pal = (i, id) => PAL[(i * 5 + hash(id)) % PAL.length];
+
+// ---- sounds the audio script needs: a soft knot tick per landing, keys for the URL ----
+const CLICKS = [];
+const pseudo = (i) => ((i * 7919) % 13) / 13;
+function typer(start, text, cps) {
+  const chars = [...text]; const times = []; let tt = start;
+  chars.forEach((c, i) => { times.push(tt); CLICKS.push({ t: +tt.toFixed(3), s: false }); tt += (1 / cps) * (.7 + .6 * pseudo(i)); });
+  return { start, end: tt, at: (t) => chars.slice(0, times.filter((x) => x <= t).length).join("") };
+}
+const urlT = typer(23.4, "peru-ordenado.crafter.ing", 18);
+
+// ---- layout per format ----
+const W = H ? 1920 : 1080, HT = H ? 1080 : 1920;
+const CORD = H
+  ? { x0: 1000, x1: 1840, y: 520, step: 170, first: 1085, maxLen: 270, numY: 820, labY: 915 }
+  : { x0: 72, x1: 1008, y: 1270, step: 200, first: 172, maxLen: 310, numY: 1620, labY: 1718 };
+$("q").setAttribute("viewBox", `0 0 ${W} ${HT}`);
+
+// ---- department map + districts of the department ----
+const dep = D.deps.find((s) => s.id === D.dep.id);
+const place = (s, p) => {
+  const [x0, y0, x1, y1] = s.bbox, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  return `translate(${(p.x - cx * p.s).toFixed(2)} ${(p.y - cy * p.s).toFixed(2)}) scale(${p.s})`;
+};
+const depEls = D.deps.map((s) => {
+  const p = document.createElementNS(NS, "path");
+  p.setAttribute("d", s.d); p.setAttribute("fill", pal(D.deps.indexOf(s), s.id));
+  p.setAttribute("stroke", "#fbf6ec"); p.setAttribute("stroke-width", "1.4"); p.setAttribute("vector-effect", "non-scaling-stroke"); p.setAttribute("stroke-linejoin", "round");
+  p.setAttribute("transform", place(s, s.map));
+  $("deps").appendChild(p); return p;
+});
+const sibG = $("sibs");
+sibG.setAttribute("transform", place(dep, dep.map));
+let mine = null;
+const sibEls = D.sibs.items.map((s, i) => {
+  const p = document.createElementNS(NS, "path");
+  p.setAttribute("d", s.d); p.setAttribute("fill", pal(i, s.id));
+  p.setAttribute("stroke", "#fbf6ec"); p.setAttribute("stroke-width", "1"); p.setAttribute("vector-effect", "non-scaling-stroke"); p.setAttribute("stroke-linejoin", "round");
+  if (s.id === D.district.id) mine = p;
+  sibG.appendChild(p); return p;
+});
+// the featured district goes last so its outline sits on top
+sibG.appendChild(mine);
+mine.setAttribute("fill", "#dc4f2a");
+
+// camera: states in the 880x780 view space. A bbox placed by `map` is centered at p.x,p.y.
+const fit = (w, h, cx, cy, box) => { const k = Math.min(box / w, box / h); return { k, x: 440 - cx * k, y: 390 - cy * k }; };
+const [dx0, dy0, dx1, dy1] = dep.bbox;
+const CAM0 = { k: 1, x: 0, y: 0 };
+const CAM1 = fit((dx1 - dx0) * dep.map.s, (dy1 - dy0) * dep.map.s, dep.map.x, dep.map.y, 700);
+// district rect inside the department's placed space
+const [bx0, by0, bx1, by1] = D.district.bbox;
+const cxD = dep.map.x + (((bx0 + bx1) / 2) - (dx0 + dx1) / 2) * dep.map.s;
+const cyD = dep.map.y + (((by0 + by1) / 2) - (dy0 + dy1) / 2) * dep.map.s;
+const CAM2 = fit((bx1 - bx0) * dep.map.s, (by1 - by0) * dep.map.s, cxD, cyD, 560);
+const camAt = (a, b, k) => ({ k: lerp(a.k, b.k, k), x: lerp(a.x, b.x, k), y: lerp(a.y, b.y, k) });
+
+// ---- quipu: the cord and one thread per layer ----
+const q = $("q");
+const cord = document.createElementNS(NS, "path");
+cord.setAttribute("stroke", ACC); cord.setAttribute("stroke-width", "7"); cord.setAttribute("stroke-linecap", "round"); cord.setAttribute("fill", "none"); cord.setAttribute("opacity", ".7");
+q.appendChild(cord);
+const T0 = 10.6, GAP = 2.3;
+const COPY = {
+  quipu: (r) => `<b>${r.text}</b> de la plata para obras ya fue gastada. El año pasado, a esta altura, iba en <b>${D.district.prev} %</b>.`,
+  cobertura: (r) => `<b>${r.text}</b> de sus centros poblados tienen señal 4G.`,
+  emergencias: (r) => `<b>${r.text}</b> emergencias en lo que va del año.`,
+  zonas: (r) => `<b>${r.text}</b> zonas críticas por riesgo.`,
+  digital: (r) => `<b>${r.text}</b> de 100 en servicios digitales.`,
+};
+const threads = D.district.rows.map((r, i) => {
+  const x = CORD.first + i * CORD.step;
+  const len = r.frac === null ? 40 : 90 + r.frac * (CORD.maxLen - 90);
+  const g = document.createElementNS(NS, "g");
+  g.innerHTML = `<path class="st" stroke="${ACC}" stroke-width="4" stroke-linecap="round" fill="none" opacity=".75"/><circle class="m" r="7" fill="${ACC}" opacity=".35"/><circle class="kn" r="14" fill="${ACC}"/>`;
+  q.appendChild(g);
+  const num = document.createElement("div"); num.className = "num"; num.style.left = x - 100 + "px"; num.style.top = CORD.numY + "px"; $("nums").appendChild(num);
+  const lab = document.createElement("div"); lab.className = "lab"; lab.style.left = x - 100 + "px"; lab.style.top = CORD.labY + "px"; lab.textContent = r.label; $("nums").appendChild(lab);
+  const t0 = T0 + i * GAP;
+  CLICKS.push({ t: +(t0 + .85).toFixed(2), s: true });
+  return { r, x, len, g, num, lab, t0, st: g.querySelector(".st"), m: g.querySelector(".m"), kn: g.querySelector(".kn") };
+});
+const final = (r) => r.text.replace(" %", "");
+
+function swap(el, t, list, fade = .4, html = false) {
+  let cur = list[0];
+  for (const e of list) if (t >= e.t) cur = e;
+  if (el._txt !== cur.text) { el[html ? "innerHTML" : "textContent"] = cur.text; el._txt = cur.text; }
+  el.style.opacity = t < cur.t + fade ? ease(seg(t, cur.t, cur.t + fade)) : 1;
+}
+
+function seek(t) {
+  $("brand").style.opacity = ease(seg(t, 0, .6));
+  swap($("eb"), t, [
+    { t: 0, text: "" },
+    { t: .4, text: "Perú · 25 departamentos" },
+    { t: 4.0, text: D.dep.name },
+    { t: 7.2, text: "Un distrito" },
+    { t: 10.0, text: "Su quipu" },
+  ]);
+  // view fades out near the end
+  const endOn = ease(seg(t, 22.6, 23.3));
+  $("view").style.opacity = ease(seg(t, .2, .9));
+
+  // camera + layers
+  let cam = CAM0;
+  if (t >= 3.0 && t < 6.4) cam = camAt(CAM0, CAM1, ease(seg(t, 3.0, 5.4)));
+  else if (t >= 6.4) cam = camAt(CAM1, CAM2, ease(seg(t, 6.8, 9.0)));
+  $("camg").setAttribute("transform", `translate(${cam.x.toFixed(2)} ${cam.y.toFixed(2)}) scale(${cam.k.toFixed(4)})`);
+  const dim = ease(seg(t, 2.2, 3.2));
+  depEls.forEach((el, i) => { el.style.opacity = D.deps[i].id === D.dep.id ? 1 - ease(seg(t, 5.0, 5.8)) : 1 - dim * .88; });
+  $("deps").style.opacity = t < 5.8 ? 1 : 0;
+  const sibIn = ease(seg(t, 4.6, 5.8));
+  sibG.style.opacity = sibIn;
+  const focus = ease(seg(t, 7.2, 8.6));
+  sibEls.forEach((el) => { el.style.opacity = el === mine ? 1 : 1 - focus * .55; });
+  mine.setAttribute("stroke", t >= 6.6 ? ACC : "#fbf6ec");
+  mine.setAttribute("stroke-width", t >= 6.6 ? String(lerp(1, 3.2, ease(seg(t, 6.6, 7.4)))) : "1");
+
+  // why this exists, from the first second
+  const hook = $("hook");
+  swap(hook, t, [
+    { t: 0, text: "" },
+    { t: .5, text: "¿Cómo le va a <i>tu distrito</i>?" },
+    { t: 3.4, text: "Cuánto <i>gasta</i>, si llega la <i>señal</i>, cuántas <i>emergencias</i> tuvo." },
+    { t: 6.0, text: "Lo vemos en uno: <i>Huancavelica</i>." },
+  ], .5, true);
+  hook.style.opacity = hook.style.opacity * (1 - ease(seg(t, 8.0, 8.6)));
+  // name
+  const nameOn = ease(seg(t, 8.6, 9.4));
+  $("name").style.opacity = nameOn; $("name").textContent = D.district.name;
+  $("name").style.transform = `translateY(${(1 - nameOn) * 24}px)`;
+  $("where").style.opacity = ease(seg(t, 9.0, 9.7)); $("where").textContent = D.district.where;
+
+  // cord and threads
+  const cordOn = ease(seg(t, 9.9, 10.7));
+  cord.setAttribute("d", cordOn > 0 ? `M${CORD.x0} ${CORD.y}H${lerp(CORD.x0, CORD.x1, cordOn).toFixed(1)}` : "");
+  // vertical: the map starts big and settles up when the quipu needs the room
+  if (H) {
+    const z = ease(seg(t, 8.4, 9.8));
+    $("view").style.transform = `translateX(${lerp(460, 0, z).toFixed(1)}px)`;
+  } else {
+    const z = ease(seg(t, 8.4, 9.8));
+    $("view").style.transformOrigin = "50% 0";
+    $("view").style.transform = `translateY(${lerp(120, 0, z).toFixed(1)}px) scale(${lerp(1.22, 1, z).toFixed(4)})`;
+  }
+  let capHtml = "", capT = 0;
+  threads.forEach((th, i) => {
+    const fall = easeOut(seg(t, th.t0, th.t0 + .85));
+    const L = th.len * fall;
+    th.st.setAttribute("d", `M${th.x} ${CORD.y}v${L.toFixed(1)}`);
+    th.m.setAttribute("cx", th.x); th.m.setAttribute("cy", CORD.y + L * .45);
+    th.kn.setAttribute("cx", th.x); th.kn.setAttribute("cy", CORD.y + L);
+    // a small bounce when it lands
+    const land = seg(t, th.t0 + .85, th.t0 + 1.25);
+    th.kn.setAttribute("r", (14 + 6 * Math.sin(Math.PI * land) * (land > 0 && land < 1 ? 1 : 0)).toFixed(1));
+    const vis = fall > 0 ? 1 : 0;
+    th.g.style.opacity = vis;
+    const on = ease(seg(t, th.t0 + .6, th.t0 + 1.1));
+    th.num.style.opacity = on; th.lab.style.opacity = on;
+    th.num.style.transform = `translateY(${(1 - on) * 16}px)`;
+    const n = parseFloat(final(th.r).replace(",", "."));
+    const cnt = easeOut(seg(t, th.t0 + .6, th.t0 + 1.8));
+    th.num.textContent = th.r.frac === null || isNaN(n) ? th.r.text : (Number.isInteger(n) ? Math.round(n * cnt) : (n * cnt).toFixed(1)) + (th.r.text.includes("%") ? " %" : "");
+    if (t >= th.t0 + .5) { capHtml = COPY[th.r.key](th.r); capT = th.t0 + .5; }
+  });
+  const capEl = $("cap");
+  if (capEl._h !== capHtml) { capEl.innerHTML = capHtml; capEl._h = capHtml; }
+  capEl.style.opacity = t < capT + .4 ? ease(seg(t, capT, capT + .4)) : 1;
+
+  // closing
+  q.style.opacity = 1 - endOn; $("nums").style.opacity = 1 - endOn; capEl.style.opacity = capEl.style.opacity * (1 - endOn);
+  $("name").style.opacity = nameOn * (1 - endOn); $("where").style.opacity = $("where").style.opacity * (1 - endOn);
+  $("view").style.opacity = ease(seg(t, .2, .9)) * (1 - endOn);
+  $("end").style.opacity = endOn; $("end").style.visibility = endOn > 0 ? "visible" : "hidden";
+  $("end-q").style.transform = `translateY(${(1 - endOn) * 30}px)`;
+  const typed = ease(seg(t, 23.0, 23.4));
+  $("field").innerHTML = "Escribe tu distrito" + (Math.floor(t * 2) % 2 === 0 ? '<span class="cur"></span>' : "");
+  $("field").style.opacity = typed;
+  $("end-url").innerHTML = urlT.at(t) + (t > 23.3 && t < 25.6 ? '<span class="cur"></span>' : "");
+  $("end-by").style.opacity = ease(seg(t, 25.0, 25.6));
+  $("credit").style.opacity = ease(seg(t, 24.2, 24.8));
+}
+window.seek = seek; window.DURATION = DURATION; window.CLICKS = CLICKS;
+seek(0);
+</script></body></html>
