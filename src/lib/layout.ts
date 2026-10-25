@@ -31,11 +31,33 @@ export function mapLayout(shapes: Shape[], box: Box): Map<string, Place> {
 
 export const LABEL_H = 22;
 const LABEL_MIN_W = 44;
-const LABEL_MAX_W = 112;
+const LABEL_MAX_W = 150;
 
-/** Ancho que necesita el nombre en mayúsculas (9.5px, peso 500) para no cortarse; la etiqueta ocupa su celda. */
+let ruler: CanvasRenderingContext2D | null | undefined;
+const widths = new Map<string, number>();
+
+/** Ancho real del nombre en mayúsculas (9.5px, peso 500) si hay canvas; si no, una estimación holgada. */
+function textWidth(upper: string): number {
+  const known = widths.get(upper);
+  if (known !== undefined) return known;
+  if (ruler === undefined) {
+    ruler =
+      typeof document === "undefined"
+        ? null
+        : document.createElement("canvas").getContext("2d");
+    if (ruler) ruler.font = "500 9.5px Inter, system-ui, sans-serif";
+  }
+  const w = ruler ? ruler.measureText(upper).width * 1.08 : upper.length * 7.2;
+  widths.set(upper, w);
+  return w;
+}
+
+/** Ancho que necesita el nombre para no cortarse; la etiqueta ocupa su celda, hasta un tope. */
 export const labelWidth = (name: string) =>
-  Math.min(LABEL_MAX_W, Math.max(LABEL_MIN_W, Math.ceil(name.length * 6.4)));
+  Math.min(
+    LABEL_MAX_W,
+    Math.max(LABEL_MIN_W, Math.ceil(textWidth(name.toUpperCase()) + 4)),
+  );
 
 type Row = { items: Shape[]; w: number; h: number; labeled: boolean };
 
