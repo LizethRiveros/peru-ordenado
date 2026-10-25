@@ -340,6 +340,20 @@ export function Stage({
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.textAlign = "center";
       const m = state.current.metric;
+      const serif = styles.getPropertyValue("--font-fraunces") || "Georgia, serif";
+      // Where each callout will be drawn, so the small labels around it can step aside instead of colliding.
+      const boxes = callouts.flatMap((it) => {
+        const { x, y, s } = it.cur;
+        const top = y - ((it.shape.bbox[3] - it.shape.bbox[1]) * s) / 2;
+        ctx.font = `400 17px ${serif}, Georgia, serif`;
+        const w = Math.max(ctx.measureText(it.shape.name).width, 60);
+        const px = Math.min(Math.max(x, w / 2 + 8), size.current.w - w / 2 - 8);
+        const py = Math.max(top - 38, 20);
+        return [
+          { l: px - w / 2 - 8, r: px + w / 2 + 8, t: py - 20, b: py + 22 },
+          { l: x - 6, r: x + 6, t: py + 18, b: top + 4 },
+        ];
+      });
       for (const it of labels) {
         const { x, y, s, a } = it.cur;
         const bottom = y + ((it.shape.bbox[3] - it.shape.bbox[1]) * s) / 2;
@@ -347,6 +361,12 @@ export function Stage({
           (it.shape.bbox[2] - it.shape.bbox[0]) * s,
           labelWidth(it.shape.name),
         );
+        if (
+          boxes.some(
+            (b) => x - w / 2 < b.r && x + w / 2 > b.l && bottom < b.b && bottom + LABEL_H > b.t,
+          )
+        )
+          continue;
         ctx.globalAlpha = a;
         ctx.fillStyle = ink;
         ctx.font = `500 9.5px ${font}`;
@@ -364,7 +384,6 @@ export function Stage({
       // the figure in the accent, both haloed with the page color so they read over any fill.
       const surface = styles.getPropertyValue("--surface");
       const accent = styles.getPropertyValue("--accent");
-      const serif = styles.getPropertyValue("--font-fraunces") || "Georgia, serif";
       ctx.lineJoin = "round";
       for (const it of callouts) {
         const { x, y, s, a } = it.cur;
