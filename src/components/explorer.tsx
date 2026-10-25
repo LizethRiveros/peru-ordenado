@@ -879,11 +879,14 @@ function Legend({ metric, shapes }: { metric: Metric; shapes: Shape[] }) {
       lo: "0",
       hi: "6+",
     },
-    digital: {
-      colors: stops.map((t) => digitalColor(20 + t * 50)),
-      lo: "≤20",
-      hi: "70+",
-    },
+    digital: (() => {
+      const r = rangeFor(shapes, "digital");
+      return {
+        colors: stops.map((t) => digitalColor(20 + t * 50)),
+        lo: `${Math.round(r[0])} o menos`,
+        hi: `${Math.round(r[1])} o más`,
+      };
+    })(),
   }[metric];
   return (
     <div className="flex flex-col gap-1.5">
