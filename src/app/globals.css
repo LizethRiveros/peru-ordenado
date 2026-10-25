@@ -187,6 +187,13 @@ body {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .cord,
+  .animate-in {
+    animation: none;
+  }
+}
+
 .cord {
   transform-box: fill-box;
   transform-origin: top;

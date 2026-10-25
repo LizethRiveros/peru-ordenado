@@ -287,7 +287,7 @@ export function Stage({
           highlighted.current.has(it.shape.id);
         if (hl && t > 0.6) {
           ctx.globalAlpha = Math.min(1, (t - 0.6) / 0.3) * a;
-          ctx.lineWidth = 2.5 / s;
+          ctx.lineWidth = 1.4 / s;
           ctx.strokeStyle = ink;
           ctx.stroke(it.path);
           callouts.push(it);

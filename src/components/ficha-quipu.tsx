@@ -9,7 +9,7 @@ const MAX = 108;
 export function FichaQuipu({ rows }: { rows: FichaRow[] }) {
   return (
     <svg
-      viewBox="0 0 320 188"
+      viewBox="0 0 320 196"
       role="img"
       aria-label={rows.map((r) => `${r.label}: ${r.text}`).join(". ")}
       className="w-full"
@@ -77,12 +77,16 @@ export function FichaQuipu({ rows }: { rows: FichaRow[] }) {
             </text>
             <text
               x={x}
-              y="170"
+              y="168"
               textAnchor="middle"
               className="fill-muted-foreground"
               style={{ fontSize: 9.5, letterSpacing: "0.02em" }}
             >
-              {r.label}
+              {r.label.split(" ").map((w, k) => (
+                <tspan key={w} x={x} dy={k === 0 ? 0 : 11}>
+                  {w}
+                </tspan>
+              ))}
             </text>
           </g>
         );

@@ -224,7 +224,7 @@ export function Explorer() {
         </p>
         <p
           key={title}
-          className="animate-in text-[10.5px] font-medium tracking-[0.08em] text-muted-foreground uppercase"
+          className="text-[10.5px] font-medium tracking-[0.08em] text-muted-foreground uppercase"
         >
           {title}
         </p>
@@ -334,7 +334,7 @@ export function Explorer() {
       <SiteHeader about={<AboutDialog sources={data?.sources} />} />
       <main className="grid flex-1 gap-4 lg:min-h-0 lg:flex-none px-3 pb-3 sm:px-5 lg:h-[calc(100dvh-3.75rem)] lg:grid-cols-[minmax(20rem,23rem)_1fr] lg:grid-rows-[minmax(0,1fr)]">
         <aside className="contents lg:flex lg:min-h-0 lg:flex-col lg:gap-5 lg:overflow-y-auto lg:pt-8 lg:pr-1">
-          <div className="animate-in relative z-40 order-first pt-3 lg:pt-0">
+          <div className="relative z-40 order-first pt-3 lg:pt-0">
             <h1 className="font-display text-5xl leading-[0.95] tracking-[-0.02em] sm:text-6xl">
               Qui<em className="font-light">pu</em>
             </h1>
