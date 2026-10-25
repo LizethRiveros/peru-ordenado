@@ -147,11 +147,11 @@ cord.setAttribute("stroke", ACC); cord.setAttribute("stroke-width", "7"); cord.s
 q.appendChild(cord);
 const T0 = 10.6, GAP = 2.3;
 const COPY = {
-  quipu: (r) => `<b>${r.text}</b> de la plata para obras ya fue gastada. El año pasado, a esta altura, iba en <b>${D.district.prev} %</b>.`,
-  cobertura: (r) => `<b>${r.text}</b> de sus centros poblados tienen señal 4G.`,
-  emergencias: (r) => `<b>${r.text}</b> emergencias en lo que va del año.`,
-  zonas: (r) => `<b>${r.text}</b> zonas críticas por riesgo.`,
-  digital: (r) => `<b>${r.text}</b> de 100 en servicios digitales.`,
+  quipu: (r) => `<b>${r.text}</b> de su presupuesto para obras ya fue gastado. Hace un año, en este mismo mes, llevaba <b>${D.district.prev} %</b>.`,
+  cobertura: (r) => `<b>${r.text}</b> de sus pueblos y caseríos tienen señal 4G de celular.`,
+  emergencias: (r) => `<b>${r.text}</b> estados de emergencia declarados entre 2017 y 2024.`,
+  zonas: (r) => `<b>${r.text}</b> zonas con peligro de derrumbes y huaicos.`,
+  digital: (r) => `<b>${r.text}</b> puntos de 100 en presencia digital de su municipalidad.`,
 };
 const threads = D.district.rows.map((r, i) => {
   const x = CORD.first + i * CORD.step;
