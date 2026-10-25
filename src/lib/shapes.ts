@@ -33,6 +33,8 @@ export type Shape = {
     zonas: number;
     zonasN: number;
   };
+  /** Habitantes proyectados por el INEI al 30 de junio de 2025 (referencial). */
+  pob?: number;
   /** muniscan digital-surface index 0–100 (provinces and departments: mean of their districts). */
   digital?: number;
   /**
@@ -47,11 +49,13 @@ export type Level = "dep" | "prov" | "dist";
 export type Dataset = {
   width: number;
   height: number;
-  sources: { geo: string; spend: string; quipu?: string };
+  sources: { geo: string; spend: string; quipu?: string; pob?: string };
 } & Record<Level, Shape[]>;
 
 export type Metric =
   | "area"
+  | "poblacion"
+  | "densidad"
   | "inversion"
   | "ejecucion"
   | "quipu"
@@ -69,6 +73,14 @@ export const LEVELS: Record<Level, { label: string; plural: string }> = {
 
 export const METRICS: Record<Metric, { label: string; title: string }> = {
   area: { label: "¿Qué tan grande es?", title: "ordenados por área (km²)" },
+  poblacion: {
+    label: "¿Cuánta gente vive ahí?",
+    title: "ordenados por población proyectada 2025 (INEI)",
+  },
+  densidad: {
+    label: "¿Qué tan poblado está?",
+    title: "ordenados por habitantes por km² (proyección 2025)",
+  },
   inversion: {
     label: "¿Cuánto presupuesto tiene para obras?",
     title: "ordenados por presupuesto de inversión municipal 2024",
@@ -80,7 +92,7 @@ export const METRICS: Record<Metric, { label: string; title: string }> = {
   quipu: {
     label: "¿Cuánto lleva gastado este año?",
     title:
-      "ordenados por % de inversión municipal ya gastada en lo que va de 2026",
+      "ordenados por cuánto de su presupuesto para obras ya gastaron en 2026",
   },
   ornato: {
     label: "¿Cuánto fue a plazas y parques?",
@@ -111,6 +123,10 @@ export const METRICS: Record<Metric, { label: string; title: string }> = {
 const GUIDE: Record<Metric, string> = {
   area:
     "Cada forma es un {lugar} del Perú dibujado a su tamaño real. Van de más grande a más chico. Los colores solo sirven para distinguir una región de otra.",
+  poblacion:
+    "Cada forma es un {lugar}. Cuántas personas viven ahí según la proyección del INEI para 2025, hecha antes del Censo 2025 (puede diferir del conteo). Más oscuro: más gente.",
+  densidad:
+    "Cada forma es un {lugar}. Cuántas personas viven por cada kilómetro cuadrado (proyección INEI 2025 entre el área). Más oscuro: más apretado. Un distrito enorme y casi vacío sale claro aunque tenga mucha gente.",
   inversion:
     "Cada forma es un {lugar}. Cuanto más oscuro el color, más presupuesto tiene la municipalidad para hacer obras (puentes, colegios, caminos, plazas) en 2024. Es el presupuesto del año, no de toda la vida.",
   ejecucion:
@@ -139,6 +155,8 @@ export const guide = (metric: Metric, level: Level) =>
 
 export const SOURCE: Record<Metric, string> = {
   area: "IGN",
+  poblacion: "INEI",
+  densidad: "INEI · IGN",
   inversion: "MEF 2024",
   ejecucion: "MEF 2024",
   quipu: "MEF 2026 · quipu",
@@ -165,6 +183,9 @@ export function certainty(shape: Shape): number {
 export function value(shape: Shape, metric: Metric): number | undefined {
   if (metric === "area") return shape.area;
   if (metric === "digital") return shape.digital;
+  if (metric === "poblacion") return shape.pob;
+  if (metric === "densidad")
+    return shape.pob !== undefined && shape.area > 0 ? shape.pob / shape.area : undefined;
   if (metric === "quipu")
     return shape.avance?.pim ? shape.avance.dev / shape.avance.pim : undefined;
   if (metric === "cobertura")

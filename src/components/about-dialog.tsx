@@ -149,7 +149,10 @@ export function AboutDialog({
               lluvias o déficit hídrico 2017-2024 de la PCM; cada prórroga
               cuenta. <strong>Zonas críticas:</strong> inventario de peligros
               geológicos del INGEMMET, solo en unos 1,000 distritos; el resto es
-              sin datos, no cero. <strong>Gentilicios:</strong> los de los 25
+              sin datos, no cero. <strong>Población y densidad:</strong>{" "}
+              población total proyectada por el INEI al 30 de junio de 2025
+              (cifra referencial, hecha antes del Censo 2025: puede diferir del conteo); la densidad es esa
+              población entre el área del distrito. <strong>Gentilicios:</strong> los de los 25
               departamentos escritos a mano; el resto, tal como dice la ficha
               de Wikipedia de cada lugar, sin verificar uno por uno. Los
               nombres con tilde salen de Wikidata más una revisión a mano.

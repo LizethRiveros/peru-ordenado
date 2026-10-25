@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { colorFor, mixOklch, type Oklch, parseOklch, rangeFor } from "@/lib/color";
-import { km2, pct, soles } from "@/lib/format";
+import { count, habitantes, km2, pct, soles } from "@/lib/format";
 import {
   type Box,
   gridLayout,
@@ -55,6 +55,12 @@ export function sortShapes(shapes: Shape[], metric: Metric): Shape[] {
 
 export function valueLabel(shape: Shape, metric: Metric): string {
   if (metric === "area") return km2(shape.area);
+  if (metric === "poblacion")
+    return shape.pob === undefined ? "sin datos" : habitantes(shape.pob);
+  if (metric === "densidad") {
+    const d = value(shape, metric);
+    return d === undefined ? "sin datos" : `${d < 10 ? d.toFixed(1) : count(d)} hab/km²`;
+  }
   if (metric === "digital")
     return shape.digital === undefined ? "sin datos" : `${shape.digital}/100`;
   if (metric === "ornato" || metric === "quipu" || metric === "cobertura") {
@@ -79,6 +85,7 @@ export function Stage({
   label,
   highlight,
   zoom = false,
+  lift = 0,
   allNames = false,
   onHover,
 }: {
@@ -91,6 +98,8 @@ export function Stage({
   highlight?: string[];
   /** Fly in on the highlighted place and let the rest step back (a looked-up place, not the story). */
   zoom?: boolean;
+  /** Fraction of the height the focus is raised by, to leave room for a sheet over the bottom of the map. */
+  lift?: number;
   /** Name every shape in the sorted view, shrinking them until the names fit. */
   allNames?: boolean;
   onHover: (
@@ -108,6 +117,7 @@ export function Stage({
   const highlighted = useRef(new Set<string>());
   const retargetTo = useRef<(next: typeof state.current) => void>(() => {});
   const zoomOn = useRef(zoom);
+  const liftRef = useRef(lift);
   const aim = useRef<() => void>(() => {});
   // Camera: the focus point (in layout space) glides to the middle of the canvas while k grows.
   const cam = useRef({
@@ -284,7 +294,7 @@ export function Stage({
           it.cur = {
             ...it.cur,
             x: (it.cur.x - camX) * camK + size.current.w / 2,
-            y: (it.cur.y - camY) * camK + size.current.h / 2,
+            y: (it.cur.y - camY) * camK + size.current.h * (0.5 - liftRef.current),
             s: it.cur.s * camK,
           };
         }
@@ -303,7 +313,7 @@ export function Stage({
         );
         const stepBack =
           back > 0 && it.level === state.current.level && !highlighted.current.has(it.shape.id)
-            ? 1 - 0.7 * back
+            ? 1 - 0.78 * back
             : 1;
         ctx.globalAlpha = a * stepBack * (it.sure.from + (it.sure.to - it.sure.from) * t);
         ctx.fillStyle = mixOklch(it.color.from, it.color.to, t);
@@ -318,8 +328,15 @@ export function Stage({
           highlighted.current.has(it.shape.id);
         if (hl && t > 0.6) {
           ctx.globalAlpha = Math.min(1, (t - 0.6) / 0.3) * a;
-          ctx.lineWidth = 1.4 / s;
-          ctx.strokeStyle = ink;
+          ctx.save();
+          ctx.shadowColor = "rgba(60, 40, 20, 0.35)";
+          ctx.shadowBlur = 18 * dpr;
+          ctx.shadowOffsetY = 5 * dpr;
+          ctx.fillStyle = mixOklch(it.color.from, it.color.to, t);
+          ctx.fill(it.path);
+          ctx.restore();
+          ctx.lineWidth = 2.6 / s;
+          ctx.strokeStyle = styles.getPropertyValue("--accent");
           ctx.stroke(it.path);
           callouts.push(it);
         }
@@ -468,6 +485,13 @@ export function Stage({
       if (performance.now() >= settledAt.current) draw(performance.now());
     };
 
+    // Zoom so the place fills about 40% of the canvas: a tiny district needs a lot more than a big one.
+    const fitK = (it: Item) => {
+      const [x0, y0, x1, y1] = it.shape.bbox;
+      const extent = Math.max(x1 - x0, y1 - y0) * it.to.s;
+      const room = 0.4 * Math.min(size.current.w, size.current.h);
+      return extent > 0 ? Math.max(1.5, Math.min(30, room / extent)) : 3.4;
+    };
     aim.current = () => {
       const now = performance.now();
       const { from, to, start } = cam.current;
@@ -483,7 +507,7 @@ export function Stage({
       );
       const flyIn = zoomOn.current && highlighted.current.size === 1 && target;
       const next = flyIn
-        ? { k: lvl === "dist" ? 3.4 : lvl === "prov" ? 2.4 : 1.5, fx: target.to.x, fy: target.to.y }
+        ? { k: fitK(target), fx: target.to.x, fy: target.to.y }
         : { k: 1, fx: size.current.w / 2, fy: size.current.h / 2 };
       if (here.k === 1 && next.k === 1) return;
       cam.current = { from: here, to: next, start: now };
@@ -507,8 +531,9 @@ export function Stage({
   useEffect(() => {
     highlighted.current = new Set(highlight ?? []);
     zoomOn.current = zoom;
+    liftRef.current = lift;
     redraw.current();
-  }, [highlight, zoom]);
+  }, [highlight, zoom, lift]);
 
   useEffect(() => {
     const cur = state.current;
@@ -520,7 +545,7 @@ export function Stage({
   // After the layout has a place for the target, point the camera at it (or back out).
   useEffect(() => {
     aim.current();
-  }, [highlight, zoom, level, view, metric]);
+  }, [highlight, zoom, lift, level, view, metric]);
 
   useEffect(() => {
     const el = canvas.current;

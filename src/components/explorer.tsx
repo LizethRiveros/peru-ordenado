@@ -26,8 +26,9 @@ import {
   NO_DATA,
   ornatoColor,
   quipuColor,
+  terracotta,
 } from "@/lib/color";
-import { count, km2, pct, soles } from "@/lib/format";
+import { count, densidad, habitantes, km2, pct, soles } from "@/lib/format";
 import {
   parseSelection,
   type Selection,
@@ -45,7 +46,7 @@ import {
   SOURCE,
   value,
 } from "@/lib/shapes";
-import { fichaRows } from "@/lib/ficha";
+import { conclusion, fichaRows } from "@/lib/ficha";
 import { figure } from "@/lib/figure";
 import { buildStory, type Step } from "@/lib/story";
 
@@ -66,6 +67,15 @@ export function Explorer() {
   const [step, setStep] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
   const [touched, setTouched] = useState(false);
+  // Under 1024px the place card is a sheet over the bottom of the map.
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const q = window.matchMedia("(max-width: 1023px)");
+    const on = () => setPhone(q.matches);
+    on();
+    q.addEventListener("change", on);
+    return () => q.removeEventListener("change", on);
+  }, []);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -174,6 +184,12 @@ export function Explorer() {
     if (!data || !pick) return undefined;
     return [...data.dist, ...data.prov, ...data.dep].find((s) => s.id === pick);
   }, [data, pick]);
+  // On a phone the card is a sheet over the lower half: bring the map to the top so the place stays in view.
+  const pickId = pickShape?.id;
+  useEffect(() => {
+    if (!phone || !pickId) return;
+    document.querySelector("main section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [phone, pickId]);
   const vsShape = useMemo(() => {
     if (!data || !vs) return undefined;
     return [...data.dist, ...data.prov, ...data.dep].find((s) => s.id === vs);
@@ -249,6 +265,7 @@ export function Explorer() {
             label={`Mapa del Perú: ${title}`}
             highlight={highlight}
             zoom={step === null && !!pickShape && !vsShape}
+            lift={phone && pickShape ? 0.04 : 0}
             onHover={setHit}
           />
         ) : (
@@ -285,7 +302,7 @@ export function Explorer() {
         />
       )}
       {step === null && !touched && data && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-14 z-10 flex justify-center px-4">
+        <div className="pointer-events-none absolute inset-x-0 bottom-14 z-10 flex justify-center px-4 sm:justify-start sm:px-6">
           <div className="glass glass-border animate-in pointer-events-auto flex max-w-[26rem] flex-col gap-3 rounded-3xl p-3 sm:p-4">
             <p className="hidden text-[13.5px] leading-snug text-foreground sm:block">
               <strong className="font-medium">Cada pieza es un lugar real.</strong>{" "}
@@ -333,14 +350,14 @@ export function Explorer() {
   return (
     <div className="flex min-h-dvh flex-col">
       <SiteHeader about={<AboutDialog sources={data?.sources} />} />
-      <main className="grid flex-1 gap-4 lg:min-h-0 lg:flex-none px-3 pb-3 sm:px-5 lg:h-[calc(100dvh-3.75rem)] lg:grid-cols-[minmax(20rem,23rem)_1fr] lg:grid-rows-[minmax(0,1fr)]">
+      <main className="grid flex-1 grid-cols-[minmax(0,1fr)] gap-4 lg:min-h-0 lg:flex-none px-3 pb-3 sm:px-5 lg:h-[calc(100dvh-3.75rem)] lg:grid-cols-[minmax(20rem,23rem)_1fr] lg:grid-rows-[minmax(0,1fr)]">
         <aside className="contents lg:flex lg:min-h-0 lg:flex-col lg:gap-5 lg:overflow-y-auto lg:pt-8 lg:pr-1">
           <div className="relative z-40 order-first pt-3 lg:pt-0">
             <h1 className="font-display text-5xl leading-[0.95] tracking-[-0.02em] sm:text-6xl">
               Qui<em className="font-light">pu</em>
             </h1>
             {!pickShape && (
-              <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
+              <p className="mt-3 hidden max-w-sm text-[14px] leading-relaxed text-muted-foreground sm:block">
                 ¿De qué distrito eres? Mira cuánto gastó en obras, su cobertura
                 4G y sus emergencias.
               </p>
@@ -368,7 +385,7 @@ export function Explorer() {
             <div className="mt-4 max-w-sm">
               <PlaceFinder data={data} names={names} onPick={goToPlace} />
             </div>
-            <div className="mt-4 flex max-w-sm flex-wrap gap-1.5">
+            <div className="-mx-3 mt-3 flex gap-1.5 overflow-x-auto px-3 pb-1 sm:mx-0 sm:mt-4 sm:max-w-sm sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 [&>*]:shrink-0">
               {CHIPS.map(([m, label]) => (
                 <Chip
                   key={m}
@@ -416,10 +433,15 @@ export function Explorer() {
               />
             </Field>
             <Legend metric={sel.metric} shapes={shapes} />
-            <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-              {guide(sel.metric, sel.level)}{" "}
-              <span className="text-[11px]">Fuente: {SOURCE[sel.metric]}.</span>
-            </p>
+            <details className="group -mt-1">
+              <summary className="cursor-pointer list-none text-[12px] text-muted-foreground transition hover:text-foreground">
+                ¿Cómo se lee? <span className="inline-block transition group-open:rotate-45">+</span>
+              </summary>
+              <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">
+                {guide(sel.metric, sel.level)}{" "}
+                <span className="text-[11px]">Fuente: {SOURCE[sel.metric]}.</span>
+              </p>
+            </details>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -569,10 +591,17 @@ function PlaceCard({
     [other, otherPeers],
   );
   const fig = figure(shape, metric);
+  const said = useMemo(
+    () => conclusion(shape, peers, LEVELS[levelOf(shape.id)].plural),
+    [shape, peers],
+  );
   const has = value(shape, metric) !== undefined || metric === "area";
   const m = has ? metric : "area";
+  // "provincia de Huancavelica, Huancavelica" never reads as a repeated name.
   const where = [
-    shape.id.length === 6 ? names.get(shape.id.slice(0, 4)) : undefined,
+    shape.id.length === 6 && names.get(shape.id.slice(0, 4))
+      ? `provincia de ${names.get(shape.id.slice(0, 4))}`
+      : undefined,
     shape.id.length > 2 ? names.get(shape.dep) : undefined,
   ]
     .filter(Boolean)
@@ -596,10 +625,18 @@ function PlaceCard({
     });
     const puesto = all.filter((v) => v > mine).length + 1;
     const nombre = CHIPS.find(([k]) => k === m)?.[1].toLowerCase() ?? "";
-    return `Puesto ${count(puesto)} de ${count(all.length)} ${LEVELS[level].plural}${nombre ? ` en ${nombre}` : ""}`;
-  }, [shape, m, peers, level]);
+    const pais = `Puesto ${count(puesto)} de ${count(all.length)} ${LEVELS[level].plural} del país${nombre ? ` en ${nombre}` : ""}`;
+    if (level === "dep") return pais;
+    const own = peers.filter((p) => p.dep === shape.dep);
+    const vals = own.flatMap((p) => {
+      const v = value(p, m);
+      return v === undefined ? [] : [v];
+    });
+    const aqui = vals.filter((v) => v > mine).length + 1;
+    return `${pais}. En ${names.get(shape.dep) ?? "su departamento"}: puesto ${count(aqui)} de ${count(vals.length)}`;
+  }, [shape, m, peers, level, names]);
   return (
-    <div className="glass glass-border animate-in order-2 flex flex-col gap-3 rounded-3xl p-4 max-lg:glass-solid max-lg:fixed max-lg:inset-x-2 max-lg:bottom-2 max-lg:z-50 max-lg:max-h-[72dvh] max-lg:overflow-y-auto max-lg:shadow-2xl lg:order-none">
+    <div className="glass glass-border animate-in order-2 flex flex-col gap-3 rounded-3xl p-4 max-lg:glass-solid max-lg:fixed max-lg:inset-x-2 max-lg:bottom-2 max-lg:z-50 max-lg:max-h-[42dvh] max-lg:overflow-y-auto max-lg:shadow-2xl max-lg:[&>*]:shrink-0 lg:order-none">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[10.5px] tracking-[0.06em] text-muted-foreground uppercase">
@@ -614,6 +651,12 @@ function PlaceCard({
               {shape.gentilicio}
             </p>
           )}
+          {shape.pob !== undefined && (
+            <p className="mt-1 text-[12px] text-muted-foreground">
+              {habitantes(shape.pob)} · {densidad(shape.pob / shape.area)}
+              <span className="text-muted-foreground/70"> (INEI, 2025)</span>
+            </p>
+          )}
         </div>
         <button
           type="button"
@@ -624,6 +667,12 @@ function PlaceCard({
           ×
         </button>
       </div>
+      {said && (
+        <p className="font-display text-[17px] leading-snug">
+          <span className="text-muted-foreground">Su quipu cuenta: </span>
+          {said}.
+        </p>
+      )}
       <FichaQuipu rows={rows} />
       <p className="-mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
         {rankText ? `${rankText}. ` : ""}Cada hilo es más largo cuanto más
@@ -709,6 +758,8 @@ const CHIPS: [Metric, string][] = [
   ["emergencias", "Emergencias"],
   ["zonas", "Zonas críticas"],
   ["digital", "Digital"],
+  ["poblacion", "Población"],
+  ["densidad", "Densidad"],
   ["area", "Tamaño"],
 ];
 const MORE_CHIPS: [Metric, string][] = [
@@ -1016,6 +1067,8 @@ const UNIT: Partial<Record<Metric, string>> = {
   emergencias: "Estados de emergencia declarados, 2017-2024",
   zonas: "Zonas críticas por derrumbes y huaicos",
   digital: "Presencia digital, de 0 a 100 puntos",
+  poblacion: "Habitantes (proyección INEI 2025)",
+  densidad: "Habitantes por kilómetro cuadrado (proyección 2025)",
 };
 
 function Legend({ metric, shapes }: { metric: Metric; shapes: Shape[] }) {
@@ -1069,6 +1122,22 @@ function Legend({ metric, shapes }: { metric: Metric; shapes: Shape[] }) {
       lo: "0 zonas",
       hi: "6 o más",
     },
+    poblacion: (() => {
+      const r = rangeFor(shapes, "poblacion");
+      return {
+        colors: stops.map((t) => terracotta(t)),
+        lo: `${count(Math.round(r[0]))} o menos`,
+        hi: `${count(Math.round(r[1]))} o más`,
+      };
+    })(),
+    densidad: (() => {
+      const r = rangeFor(shapes, "densidad");
+      return {
+        colors: stops.map((t) => terracotta(t)),
+        lo: `${densidad(r[0])} o menos`,
+        hi: `${densidad(r[1])} o más`,
+      };
+    })(),
     digital: (() => {
       const r = rangeFor(shapes, "digital");
       return {
@@ -1154,6 +1223,10 @@ const de100 = (r: number) => Math.round(r * 100);
 function sentence(shape: Shape, metric: Metric): string | undefined {
   const v = value(shape, metric);
   if (metric === "area") return `Mide ${km2(shape.area)}.`;
+  if (metric === "poblacion" && v !== undefined)
+    return `Viven ${count(v)} personas, según la proyección que el INEI hizo antes del Censo 2025. Es una estimación y puede diferir del conteo del censo.`;
+  if (metric === "densidad" && v !== undefined)
+    return `Hay ${densidad(v)}: ${count(shape.pob ?? 0)} personas en ${km2(shape.area)}.`;
   if (v === undefined) return undefined;
   switch (metric) {
     case "inversion":
@@ -1209,6 +1282,12 @@ function countryText(data: Dataset, metric: Metric): string | undefined {
       return share(sum((s) => s.terr?.cp4g ?? 0), sum((s) => s.terr?.cp ?? 0));
     case "ornato":
       return share(sum((s) => s.mix?.ornato ?? 0), sum((s) => (s.mix ? (s.inv?.pim ?? 0) : 0)));
+    case "poblacion":
+      return `${count(sum((s) => s.pob ?? 0))} habitantes`;
+    case "densidad": {
+      const a = sum((s) => s.area);
+      return a > 0 ? densidad(sum((s) => s.pob ?? 0) / a) : undefined;
+    }
     case "emergencias": {
       const n = sum((s) => s.terr?.emergN ?? 0);
       return n ? `${(sum((s) => s.terr?.emerg ?? 0) / n).toFixed(1)} decretos por distrito` : undefined;
@@ -1235,7 +1314,9 @@ function Tooltip({
 }) {
   const { shape, level } = hit;
   const where = [
-    level === "dist" ? names.get(shape.id.slice(0, 4)) : undefined,
+    level === "dist" && names.get(shape.id.slice(0, 4))
+      ? `provincia de ${names.get(shape.id.slice(0, 4))}`
+      : undefined,
     level !== "dep" ? names.get(shape.dep) : undefined,
   ]
     .filter(Boolean)

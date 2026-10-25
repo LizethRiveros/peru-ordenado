@@ -10,6 +10,8 @@ const UNITS: Partial<Record<Metric, string>> = {
   emergencias: "decretos de emergencia entre 2017 y 2024",
   zonas: "zonas críticas por peligros geológicos",
   digital: "puntos de 100 en presencia digital",
+  poblacion: "habitantes (proyección INEI 2025)",
+  densidad: "habitantes por km² (proyección INEI 2025)",
 };
 
 /** The one big number for a place and criterion, with what it counts. Falls back to the size. */
@@ -18,7 +20,12 @@ export function figure(shape: Shape, metric: Metric): { big: string; unit: strin
   const unit = UNITS[metric];
   if (v !== undefined && unit) {
     const pctLike = ["quipu", "ejecucion", "ornato", "cobertura"].includes(metric);
-    return { big: pctLike ? String(de100(v)) : v.toFixed(metric === "digital" ? 0 : 1), unit };
+    const big = pctLike
+      ? String(de100(v))
+      : metric === "poblacion" || (metric === "densidad" && v >= 10)
+        ? Math.round(v).toLocaleString("es-PE")
+        : v.toFixed(metric === "digital" ? 0 : 1);
+    return { big, unit };
   }
   if (metric === "inversion" && shape.inv?.pim)
     return {

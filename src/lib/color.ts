@@ -56,6 +56,17 @@ export function quipuColor(r: number, [lo, hi]: [number, number]): string {
 
 /** Color range for a metric over a set of shapes: percentiles of the ratio for quipu, PIM min/max otherwise. */
 export function rangeFor(shapes: Shape[], metric: Metric): [number, number] {
+  if (metric === "poblacion" || metric === "densidad") {
+    const v = shapes
+      .flatMap((s) => {
+        const x = value(s, metric);
+        return x !== undefined && x > 0 ? [x] : [];
+      })
+      .sort((a, b) => a - b);
+    if (v.length === 0) return [1, 10];
+    const at = (p: number) => v[Math.min(v.length - 1, Math.floor(p * v.length))];
+    return [at(0.05), Math.max(at(0.95), at(0.05) * 2)];
+  }
   if (metric === "quipu" || metric === "digital") {
     const v = shapes
       .flatMap((s) =>
@@ -85,6 +96,12 @@ export function colorFor(
     // stretch the 5th–95th percentile over the ramp's 20–70 span
     const t = hi > lo ? Math.max(0, Math.min(1, (shape.digital - lo) / (hi - lo))) : 0.5;
     return digitalColor(20 + t * 50);
+  }
+  if (metric === "poblacion" || metric === "densidad") {
+    const v = value(shape, metric);
+    if (v === undefined) return NO_DATA;
+    // People and density span orders of magnitude: a log scale between the 5th and 95th percentile.
+    return terracotta(Math.log(Math.max(v, range[0]) / range[0]) / Math.log(range[1] / range[0]));
   }
   if (metric === "quipu")
     return shape.avance?.pim
