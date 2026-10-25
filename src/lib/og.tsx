@@ -84,7 +84,7 @@ export async function ogImage(sel: Selection) {
               fill="#2f7a4a"
             />
           </svg>
-          peru-ordenado
+          quipu
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
           <div
@@ -95,9 +95,9 @@ export async function ogImage(sel: Selection) {
               lineHeight: 1,
             }}
           >
-            Perú,&nbsp;
+            Qui
             <span style={{ fontStyle: "italic", fontWeight: 300 }}>
-              ordenado
+              pu
             </span>
           </div>
           <div
@@ -196,7 +196,7 @@ export async function ogPlace(id: string, metric: Metric) {
         }}
       >
         <div style={{ display: "flex", fontSize: 22, fontWeight: 500, color: "#b5522b" }}>
-          PERÚ, ORDENADO · {METRICS[m].label}
+          QUIPU · {METRICS[m].label}
         </div>
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ display: "flex", fontFamily: "Fraunces", fontSize: 74, lineHeight: 1 }}>

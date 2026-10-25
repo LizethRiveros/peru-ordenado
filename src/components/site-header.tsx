@@ -47,7 +47,7 @@ export function SiteHeader({ about }: { about?: ReactNode }) {
   const brand = (
     <>
       <Mark />
-      <span className="font-medium tracking-wide">peru-ordenado</span>
+      <span className="font-medium tracking-wide">quipu</span>
     </>
   );
   const brandClass =

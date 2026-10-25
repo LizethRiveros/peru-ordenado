@@ -47,7 +47,7 @@ export function AboutDialog({
               <p className="text-[11px] font-medium tracking-[0.08em] text-accent uppercase">
                 Acerca de
               </p>
-              <h2 className="mt-1 font-display text-2xl">Perú, ordenado</h2>
+              <h2 className="mt-1 font-display text-2xl">Quipu</h2>
             </div>
             <button
               type="button"

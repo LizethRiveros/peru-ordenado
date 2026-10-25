@@ -29,7 +29,7 @@ export function ShareMenu({
       }
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `peru-ordenado-${card.shape.name.toLowerCase().replace(/\s+/g, "-")}.png`;
+      a.download = `quipu-${card.shape.name.toLowerCase().replace(/\s+/g, "-")}.png`;
       a.click();
       URL.revokeObjectURL(a.href);
       setState("saved");
