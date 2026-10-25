@@ -10,10 +10,13 @@ import {
   useState,
 } from "react";
 import { AboutDialog } from "@/components/about-dialog";
+import { PlaceFinder } from "@/components/place-finder";
+import { ShareMenu } from "@/components/share-menu";
 import { SiteHeader } from "@/components/site-header";
 import { Stage, sortShapes, valueLabel } from "@/components/stage";
 import {
   budgetColor,
+  colorFor,
   countColor,
   coverageColor,
   digitalColor,
@@ -48,8 +51,9 @@ export function Explorer() {
   const [sel, setSel] = useState<Selection>({
     level: "dep",
     view: "mapa",
-    metric: "area",
+    metric: "quipu",
   });
+  const [pick, setPick] = useState<string | null>(null);
   const [allNames, setAllNames] = useState(false);
   const [hit, setHit] = useState<Hit | null>(null);
   const [video, setVideo] = useState(false);
@@ -63,6 +67,14 @@ export function Explorer() {
     const rest = parseSelection(q);
     const v = q.has("video");
     setAllNames(q.get("nombres") === "todos");
+    const lugar = q.get("lugar");
+    if (lugar && /^\d{2}(\d{2}(\d{2})?)?$/.test(lugar)) {
+      setPick(lugar);
+      rest.dep = lugar.slice(0, 2);
+      rest.level = lugar.length === 2 ? "dep" : lugar.length === 4 ? "prov" : "dist";
+      rest.view = "ordenado";
+      setTouched(true);
+    }
     setSel((s) => ({
       ...s,
       ...Object.fromEntries(Object.entries(rest).filter(([, x]) => x)),
@@ -84,8 +96,10 @@ export function Explorer() {
     else q.delete("dep");
     if (allNames) q.set("nombres", "todos");
     else q.delete("nombres");
+    if (pick) q.set("lugar", pick);
+    else q.delete("lugar");
     window.history.replaceState(null, "", `?${q}`);
-  }, [sel, ready, allNames]);
+  }, [sel, ready, allNames, pick]);
 
   const story = useMemo(() => (data ? buildStory(data) : []), [data]);
 
@@ -112,6 +126,7 @@ export function Explorer() {
   };
 
   const choose = (n: Partial<Selection>) => {
+    setPick(null);
     setStep(null);
     setTouched(true);
     setSel((s) => ({ ...s, ...n }));
@@ -142,6 +157,39 @@ export function Explorer() {
   }, [data]);
 
   const depName = sel.dep ? names.get(sel.dep) : undefined;
+
+  // "Mi lugar": a district, province or department the visitor looked up or arrived at by link.
+  const pickShape = useMemo(() => {
+    if (!data || !pick) return undefined;
+    return [...data.dist, ...data.prov, ...data.dep].find((s) => s.id === pick);
+  }, [data, pick]);
+  const highlight = useMemo(
+    () =>
+      step !== null
+        ? story[step]?.highlight
+        : pickShape
+          ? [pickShape.id]
+          : undefined,
+    [step, story, pickShape],
+  );
+  const goToPlace = (s: Shape) => {
+    setStep(null);
+    setTouched(true);
+    setPick(s.id);
+    setSel((x) => ({
+      ...x,
+      dep: s.dep,
+      level: s.id.length === 2 ? "dep" : s.id.length === 4 ? "prov" : "dist",
+      view: "ordenado",
+    }));
+  };
+  const headline = useMemo(() => {
+    if (!data) return undefined;
+    const here = countryText(scope ?? data, "quipu");
+    if (!here) return undefined;
+    const all = countryText(data, "quipu");
+    return { here, all };
+  }, [data, scope]);
   // Naming every district of the country cannot fit; one department (or provinces, departments) can.
   const canNameAll = sel.view === "ordenado" && (sel.level !== "dist" || !!sel.dep);
   const namesAll = allNames && canNameAll;
@@ -183,7 +231,7 @@ export function Explorer() {
             view={sel.view}
             metric={sel.metric}
             label={`Mapa del Perú: ${title}`}
-            highlight={step !== null ? story[step]?.highlight : undefined}
+            highlight={highlight}
             onHover={setHit}
           />
         ) : (
@@ -224,9 +272,9 @@ export function Explorer() {
           <div className="glass glass-border animate-in pointer-events-auto flex max-w-[26rem] flex-col gap-3 rounded-3xl p-4">
             <p className="text-[13.5px] leading-snug text-foreground">
               <strong className="font-medium">Esto es el Perú desarmado.</strong>{" "}
-              Cada forma es un departamento, una provincia o un distrito,
-              dibujado a su tamaño real. Cámbiale la pregunta en el panel y las
-              formas se reordenan.
+              Cada forma es un distrito, una provincia o un departamento, a su
+              tamaño real. Busca el tuyo y mira cuánto ha gastado de su plata
+              para obras, si le llega el 4G y cuántas emergencias tuvo.
             </p>
             <div className="flex gap-2">
               <button
@@ -276,7 +324,32 @@ export function Explorer() {
               territorio real, a escala; cambia el criterio y mira quién queda
               arriba.
             </p>
+            {headline && (
+              <p className="mt-4 max-w-sm font-display text-[21px] leading-snug">
+                Este año, los municipios de {depName ?? "todo el Perú"} han
+                gastado{" "}
+                <span className="text-accent">{headline.here}</span> soles para
+                obras.
+                {depName && headline.all ? (
+                  <span className="block text-[13px] text-muted-foreground">
+                    El país en conjunto: {headline.all}.
+                  </span>
+                ) : null}
+              </p>
+            )}
+            <div className="mt-4 max-w-sm">
+              <PlaceFinder data={data} names={names} onPick={goToPlace} />
+            </div>
           </div>
+          {pickShape && (
+            <PlaceCard
+              shape={pickShape}
+              metric={sel.metric}
+              names={names}
+              country={data ? countryText(data, sel.metric) : undefined}
+              onClose={() => setPick(null)}
+            />
+          )}
 
           <div className="glass glass-border order-2 flex flex-col gap-4 rounded-3xl p-4 lg:order-none">
             <Field label="Vista">
@@ -396,6 +469,117 @@ export function Explorer() {
         </aside>
         {stage}
       </main>
+    </div>
+  );
+}
+
+const UNITS: Partial<Record<Metric, string>> = {
+  quipu: "de cada 100 soles de obras ya gastados este año",
+  ejecucion: "de cada 100 soles de obras gastados en 2024",
+  ornato: "de cada 100 soles de obras, en plazas y monumentos",
+  cobertura: "de cada 100 pueblos tienen señal 4G",
+  emergencias: "decretos de emergencia entre 2017 y 2024",
+  zonas: "zonas críticas por peligros geológicos",
+  digital: "de 100 en servicios digitales",
+};
+
+/** The one big number for a place and criterion, with what it counts. Falls back to the size. */
+function figure(shape: Shape, metric: Metric): { big: string; unit: string } {
+  const v = value(shape, metric);
+  const unit = UNITS[metric];
+  if (v !== undefined && unit) {
+    const pctLike = ["quipu", "ejecucion", "ornato", "cobertura"].includes(metric);
+    return { big: pctLike ? String(de100(v)) : v.toFixed(metric === "digital" ? 0 : 1), unit };
+  }
+  if (metric === "inversion" && shape.inv?.pim)
+    return {
+      big: (shape.inv.pim / 1e6).toFixed(1),
+      unit: "millones de soles para obras en 2024",
+    };
+  return {
+    big: Math.round(shape.area).toLocaleString("es-PE"),
+    unit: "km² de territorio",
+  };
+}
+
+/** Card for the looked-up place: plain sentence, and the ways to share it. */
+function PlaceCard({
+  shape,
+  metric,
+  names,
+  country,
+  onClose,
+}: {
+  shape: Shape;
+  metric: Metric;
+  names: Map<string, string>;
+  country?: string;
+  onClose: () => void;
+}) {
+  const fig = figure(shape, metric);
+  const has = value(shape, metric) !== undefined || metric === "area";
+  const m = has ? metric : "area";
+  const where = [
+    shape.id.length === 6 ? names.get(shape.id.slice(0, 4)) : undefined,
+    shape.id.length > 2 ? names.get(shape.dep) : undefined,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const main = sentence(shape, m);
+  const line = [main, country && has ? `El país en conjunto: ${country}.` : ""]
+    .filter(Boolean)
+    .join(" ");
+  const url = `${window.location.origin}/?lugar=${shape.id}&orden=${m}`;
+  const text = `${shape.name}${shape.gentilicio ? ` (${shape.gentilicio})` : ""}: ${fig.big} ${fig.unit}. Mira el tuyo en Perú, ordenado:`;
+  const level = shape.id.length === 2 ? "dep" : shape.id.length === 4 ? "prov" : "dist";
+  return (
+    <div className="glass glass-border animate-in order-2 flex flex-col gap-3 rounded-3xl p-4 lg:order-none">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-[10.5px] tracking-[0.06em] text-muted-foreground uppercase">
+            {LEVELS[level].label}
+          </p>
+          <p className="font-display text-[26px] leading-tight">{shape.name}</p>
+          {where && (
+            <p className="text-[12px] text-muted-foreground">{where}</p>
+          )}
+          {shape.gentilicio && (
+            <p className="text-[12px] text-muted-foreground italic">
+              {shape.gentilicio}
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar"
+          className="rounded-lg px-2 py-1 text-muted-foreground transition hover:bg-foreground/5"
+        >
+          ×
+        </button>
+      </div>
+      <p className="leading-tight">
+        <span className="font-display text-[44px] text-accent">{fig.big}</span>{" "}
+        <span className="text-[13px] text-muted-foreground">{fig.unit}</span>
+      </p>
+      {line && (
+        <p className="text-[12.5px] leading-relaxed text-foreground/80">
+          {line}
+        </p>
+      )}
+      <ShareMenu
+        card={{
+          shape,
+          where: where || LEVELS[level].label,
+          big: fig.big,
+          unit: fig.unit,
+          line,
+          question: METRICS[m].label,
+          fill: colorFor(shape, m, false, [1, 1e9]),
+        }}
+        text={text}
+        url={url}
+      />
     </div>
   );
 }
