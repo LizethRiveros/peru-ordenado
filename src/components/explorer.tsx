@@ -357,7 +357,7 @@ export function Explorer() {
                 </p>
                 <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
                   es lo que han gastado los municipios de{" "}
-                  {depName ?? "todo el Perú"} de su plata para obras este año.
+                  {depName ?? "todo el Perú"} de su presupuesto para obras este año.
                   {depName && headline.all
                     ? ` El país va en ${headline.all.replace(" de cada 100", "")}.`
                     : ""}{" "}
@@ -1130,14 +1130,14 @@ function sentence(shape: Shape, metric: Metric): string | undefined {
     case "inversion":
       return `Tenía ${soles(shape.inv?.pim ?? 0)} para obras en 2024.`;
     case "ejecucion":
-      return `En 2024 gastó ${de100(v)} de cada 100 soles que tenía para obras.`;
+      return `En 2024 gastó ${de100(v)} de cada 100 soles de su presupuesto para obras.`;
     case "quipu": {
       const a = shape.avance;
       const antes =
         a && a.pimPrev > 0
           ? ` Hace un año, en este mismo mes, llevaba ${de100(a.devPrev / a.pimPrev)} de cada 100.`
           : "";
-      return `En lo que va del año gastó ${de100(v)} de cada 100 soles que tiene para obras.${antes}`;
+      return `En lo que va del año gastó ${de100(v)} de cada 100 soles de su presupuesto para obras.${antes}`;
     }
     case "ornato":
       return `${de100(v)} de cada 100 soles de sus obras 2024 fueron para plazas, parques, arcos o monumentos.`;
@@ -1156,10 +1156,10 @@ function sentence(shape: Shape, metric: Metric): string | undefined {
 function support(shape: Shape, metric: Metric): [string, string][] {
   const pim = shape.avance?.pim;
   const rows: Partial<Record<Metric, [string, string | undefined]>> = {
-    quipu: ["Plata del año para obras", pim ? soles(pim) : undefined],
-    ejecucion: ["Plata que tenía para obras (2024)", shape.inv ? soles(shape.inv.pim) : undefined],
-    inversion: ["Gastó de esa plata", shape.inv?.pim ? pct(shape.inv.dev / shape.inv.pim) : undefined],
-    ornato: ["Plata total para obras (2024)", shape.inv ? soles(shape.inv.pim) : undefined],
+    quipu: ["Presupuesto del año para obras", pim ? soles(pim) : undefined],
+    ejecucion: ["Presupuesto para obras (2024)", shape.inv ? soles(shape.inv.pim) : undefined],
+    inversion: ["Gastó de ese presupuesto", shape.inv?.pim ? pct(shape.inv.dev / shape.inv.pim) : undefined],
+    ornato: ["Presupuesto total para obras (2024)", shape.inv ? soles(shape.inv.pim) : undefined],
   };
   const r = rows[metric];
   return r?.[1] ? [[r[0], r[1]]] : [];

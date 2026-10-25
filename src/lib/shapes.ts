@@ -70,11 +70,11 @@ export const LEVELS: Record<Level, { label: string; plural: string }> = {
 export const METRICS: Record<Metric, { label: string; title: string }> = {
   area: { label: "¿Qué tan grande es?", title: "ordenados por área (km²)" },
   inversion: {
-    label: "¿Cuánta plata tiene para obras?",
+    label: "¿Cuánto presupuesto tiene para obras?",
     title: "ordenados por presupuesto de inversión municipal 2024",
   },
   ejecucion: {
-    label: "¿Cuánto gastó de esa plata? (2024)",
+    label: "¿Cuánto gastó de ese presupuesto? (2024)",
     title: "ordenados por % de inversión municipal ejecutada en 2024",
   },
   quipu: {
@@ -112,11 +112,11 @@ const GUIDE: Record<Metric, string> = {
   area:
     "Cada forma es un {lugar} del Perú dibujado a su tamaño real. Van de más grande a más chico. Los colores solo sirven para distinguir una región de otra.",
   inversion:
-    "Cada forma es un {lugar}. Cuanto más oscuro el color, más plata tiene la municipalidad para hacer obras (puentes, colegios, caminos, plazas) en 2024. Es la plata del año, no de toda la vida.",
+    "Cada forma es un {lugar}. Cuanto más oscuro el color, más presupuesto tiene la municipalidad para hacer obras (puentes, colegios, caminos, plazas) en 2024. Es el presupuesto del año, no de toda la vida.",
   ejecucion:
-    "Cada forma es un {lugar}. Más oscuro: gastó casi toda la plata que tenía para obras en 2024. Más claro: dejó mucha sin usar. Gastar poco no siempre es culpa de la municipalidad: hay obras que se retrasan por trámites.",
+    "Cada forma es un {lugar}. Más oscuro: gastó casi todo el presupuesto que tenía para obras en 2024. Más claro: dejó mucho sin usar. Gastar poco no siempre es culpa de la municipalidad: hay obras que se retrasan por trámites.",
   quipu:
-    "Cada forma es un {lugar}. Mide cuánto de la plata del año para obras ya se gastó hasta el último mes completo. Más oscuro: va avanzado. Más claro: va lento. Como el año aún no termina, compara con el mismo punto del año pasado.",
+    "Cada forma es un {lugar}. Mide cuánto del presupuesto del año para obras ya se gastó hasta el último mes completo. Más oscuro: va avanzado. Más claro: va lento. Como el año aún no termina, compara con el mismo punto del año pasado.",
   ornato:
     "Cada forma es un {lugar}. De cada 100 soles que invirtió en 2024, cuántos fueron a plazas, parques, arcos y monumentos. Un programa automático lo calculó leyendo el nombre de cada obra: es una pista, no una auditoría.",
   digital:
