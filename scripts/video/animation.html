@@ -10,7 +10,7 @@ body{font-family:Inter,sans-serif;color:var(--fg);-webkit-font-smoothing:antiali
 .abs{position:absolute}
 #brand{left:72px;top:72px;display:flex;align-items:center;gap:18px;font:600 36px Inter;letter-spacing:.01em}
 #eb{left:72px;top:150px;font:500 24px 'JetBrains Mono';letter-spacing:.12em;text-transform:uppercase;color:var(--accent);white-space:nowrap}
-#view{left:100px;top:190px;width:880px;height:780px;overflow:hidden}
+#view{left:100px;top:190px;width:880px;height:780px;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 3%,#000 97%,transparent),linear-gradient(to bottom,transparent,#000 3%,#000 97%,transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent,#000 3%,#000 97%,transparent),linear-gradient(to bottom,transparent,#000 3%,#000 97%,transparent);mask-composite:intersect}
 #view svg{position:absolute;left:0;top:0}
 #name{left:72px;top:1000px;font:300 128px/1 Fraunces;letter-spacing:-.025em;white-space:nowrap}
 #where{left:76px;top:1142px;font:400 26px 'JetBrains Mono';color:var(--muted);letter-spacing:.03em}
@@ -24,9 +24,10 @@ body{font-family:Inter,sans-serif;color:var(--fg);-webkit-font-smoothing:antiali
 #end-q i{color:var(--accent)}
 #field{margin-top:70px;width:780px;height:120px;border-radius:40px;background:var(--surface);border:1px solid var(--line);box-shadow:0 40px 90px -36px rgba(80,50,20,.35),inset 0 1px 0 rgba(255,255,255,.8);display:flex;align-items:center;padding:0 44px;font:400 44px Inter;color:#b7a48f;white-space:nowrap}
 .cur{display:inline-block;width:.5em;height:1em;background:var(--accent);vertical-align:-.12em;margin-left:4px}
-#end-url{font:500 34px 'JetBrains Mono';color:var(--accent);margin-top:56px;height:46px;white-space:nowrap}
+#end-url{font:500 50px 'JetBrains Mono';color:var(--accent);margin-top:56px;height:46px;white-space:nowrap}
 #hook{left:72px;top:1330px;width:936px;font:300 76px/1.1 Fraunces;letter-spacing:-.02em}
 #hook i{color:var(--accent)}
+#hook .big{display:block;font:300 230px/1 Fraunces;letter-spacing:-.04em;color:var(--accent);margin-bottom:14px}
 #credit{font:500 28px/1.4 Inter;color:var(--fg);margin-top:34px}
 #credit b{color:var(--accent);font-weight:600}
 #end-by{font:400 22px/1.6 'JetBrains Mono';color:var(--muted);margin-top:34px;letter-spacing:.04em;max-width:860px}
@@ -39,7 +40,8 @@ html.h,html.h body,html.h #stage{width:1920px;height:1080px}
 .h #name{left:1000px;top:190px;font-size:120px}
 .h #where{left:1004px;top:326px}
 .h #q{width:1920px;height:1080px}
-.h #hook{left:1000px;top:260px;width:820px;font-size:84px}
+.h #hook{left:1000px;top:230px;width:840px;font-size:60px}
+.h #hook .big{font-size:300px}
 .h #credit{margin-top:16px}
 .h #cap{left:1000px;top:960px;width:820px;font-size:32px;height:90px}
 .h #end-q{font-size:130px;max-width:1500px}
@@ -206,9 +208,9 @@ function seek(t) {
   const hook = $("hook");
   swap(hook, t, [
     { t: 0, text: "" },
-    { t: .5, text: "¿Cómo le va a <i>tu distrito</i>?" },
-    { t: 3.4, text: "Cuánto <i>gasta</i>, si llega la <i>señal</i>, cuántas <i>emergencias</i> tuvo." },
-    { t: 6.0, text: "Lo vemos en uno: <i>Huancavelica</i>." },
+    { t: .5, text: `<span class="big">${D.district.rows[0].text}</span>del presupuesto para obras de ${D.district.name} ya se gastó.` },
+    { t: 3.4, text: "¿Y el de <i>tu distrito</i>?" },
+    { t: 5.6, text: "Cinco datos de cada uno, en un <i>quipu</i>." },
   ], .5, true);
   hook.style.opacity = hook.style.opacity * (1 - ease(seg(t, 8.0, 8.6)));
   // name
@@ -223,7 +225,7 @@ function seek(t) {
   // vertical: the map starts big and settles up when the quipu needs the room
   if (H) {
     const z = ease(seg(t, 8.4, 9.8));
-    $("view").style.transform = `translateX(${lerp(460, 0, z).toFixed(1)}px)`;
+    $("view").style.transform = `translateX(${lerp(60, 0, z).toFixed(1)}px)`;
   } else {
     const z = ease(seg(t, 8.4, 9.8));
     $("view").style.transformOrigin = "50% 0";

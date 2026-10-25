@@ -80,7 +80,7 @@ export const METRICS: Record<Metric, { label: string; title: string }> = {
   quipu: {
     label: "¿Cuánto lleva gastado este año?",
     title:
-      "ordenados por % de inversión municipal ya gastada en lo que va de 2026",
+      "ordenados por cuánto de su presupuesto para obras ya gastaron en 2026",
   },
   ornato: {
     label: "¿Cuánto fue a plazas y parques?",

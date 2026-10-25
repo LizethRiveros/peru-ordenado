@@ -79,6 +79,7 @@ export function Stage({
   label,
   highlight,
   zoom = false,
+  lift = 0,
   allNames = false,
   onHover,
 }: {
@@ -91,6 +92,8 @@ export function Stage({
   highlight?: string[];
   /** Fly in on the highlighted place and let the rest step back (a looked-up place, not the story). */
   zoom?: boolean;
+  /** Fraction of the height the focus is raised by, to leave room for a sheet over the bottom of the map. */
+  lift?: number;
   /** Name every shape in the sorted view, shrinking them until the names fit. */
   allNames?: boolean;
   onHover: (
@@ -108,6 +111,7 @@ export function Stage({
   const highlighted = useRef(new Set<string>());
   const retargetTo = useRef<(next: typeof state.current) => void>(() => {});
   const zoomOn = useRef(zoom);
+  const liftRef = useRef(lift);
   const aim = useRef<() => void>(() => {});
   // Camera: the focus point (in layout space) glides to the middle of the canvas while k grows.
   const cam = useRef({
@@ -284,7 +288,7 @@ export function Stage({
           it.cur = {
             ...it.cur,
             x: (it.cur.x - camX) * camK + size.current.w / 2,
-            y: (it.cur.y - camY) * camK + size.current.h / 2,
+            y: (it.cur.y - camY) * camK + size.current.h * (0.5 - liftRef.current),
             s: it.cur.s * camK,
           };
         }
@@ -303,7 +307,7 @@ export function Stage({
         );
         const stepBack =
           back > 0 && it.level === state.current.level && !highlighted.current.has(it.shape.id)
-            ? 1 - 0.7 * back
+            ? 1 - 0.78 * back
             : 1;
         ctx.globalAlpha = a * stepBack * (it.sure.from + (it.sure.to - it.sure.from) * t);
         ctx.fillStyle = mixOklch(it.color.from, it.color.to, t);
@@ -318,8 +322,15 @@ export function Stage({
           highlighted.current.has(it.shape.id);
         if (hl && t > 0.6) {
           ctx.globalAlpha = Math.min(1, (t - 0.6) / 0.3) * a;
-          ctx.lineWidth = 1.4 / s;
-          ctx.strokeStyle = ink;
+          ctx.save();
+          ctx.shadowColor = "rgba(60, 40, 20, 0.35)";
+          ctx.shadowBlur = 18 * dpr;
+          ctx.shadowOffsetY = 5 * dpr;
+          ctx.fillStyle = mixOklch(it.color.from, it.color.to, t);
+          ctx.fill(it.path);
+          ctx.restore();
+          ctx.lineWidth = 2.6 / s;
+          ctx.strokeStyle = styles.getPropertyValue("--accent");
           ctx.stroke(it.path);
           callouts.push(it);
         }
@@ -507,8 +518,9 @@ export function Stage({
   useEffect(() => {
     highlighted.current = new Set(highlight ?? []);
     zoomOn.current = zoom;
+    liftRef.current = lift;
     redraw.current();
-  }, [highlight, zoom]);
+  }, [highlight, zoom, lift]);
 
   useEffect(() => {
     const cur = state.current;
@@ -520,7 +532,7 @@ export function Stage({
   // After the layout has a place for the target, point the camera at it (or back out).
   useEffect(() => {
     aim.current();
-  }, [highlight, zoom, level, view, metric]);
+  }, [highlight, zoom, lift, level, view, metric]);
 
   useEffect(() => {
     const el = canvas.current;

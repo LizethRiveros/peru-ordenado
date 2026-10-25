@@ -66,6 +66,15 @@ export function Explorer() {
   const [step, setStep] = useState<number | null>(null);
   const [paused, setPaused] = useState(false);
   const [touched, setTouched] = useState(false);
+  // Under 1024px the place card is a sheet over the bottom of the map.
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const q = window.matchMedia("(max-width: 1023px)");
+    const on = () => setPhone(q.matches);
+    on();
+    q.addEventListener("change", on);
+    return () => q.removeEventListener("change", on);
+  }, []);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -249,6 +258,7 @@ export function Explorer() {
             label={`Mapa del Perú: ${title}`}
             highlight={highlight}
             zoom={step === null && !!pickShape && !vsShape}
+            lift={phone && pickShape ? 0.3 : 0}
             onHover={setHit}
           />
         ) : (
@@ -285,7 +295,7 @@ export function Explorer() {
         />
       )}
       {step === null && !touched && data && (
-        <div className="pointer-events-none absolute inset-x-0 bottom-14 z-10 flex justify-center px-4">
+        <div className="pointer-events-none absolute inset-x-0 bottom-14 z-10 flex justify-center px-4 sm:justify-start sm:px-6">
           <div className="glass glass-border animate-in pointer-events-auto flex max-w-[26rem] flex-col gap-3 rounded-3xl p-3 sm:p-4">
             <p className="hidden text-[13.5px] leading-snug text-foreground sm:block">
               <strong className="font-medium">Cada pieza es un lugar real.</strong>{" "}
@@ -416,10 +426,15 @@ export function Explorer() {
               />
             </Field>
             <Legend metric={sel.metric} shapes={shapes} />
-            <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-              {guide(sel.metric, sel.level)}{" "}
-              <span className="text-[11px]">Fuente: {SOURCE[sel.metric]}.</span>
-            </p>
+            <details className="group -mt-1">
+              <summary className="cursor-pointer list-none text-[12px] text-muted-foreground transition hover:text-foreground">
+                ¿Cómo se lee? <span className="inline-block transition group-open:rotate-45">+</span>
+              </summary>
+              <p className="mt-1.5 text-[12.5px] leading-relaxed text-muted-foreground">
+                {guide(sel.metric, sel.level)}{" "}
+                <span className="text-[11px]">Fuente: {SOURCE[sel.metric]}.</span>
+              </p>
+            </details>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -571,8 +586,11 @@ function PlaceCard({
   const fig = figure(shape, metric);
   const has = value(shape, metric) !== undefined || metric === "area";
   const m = has ? metric : "area";
+  // "provincia de Huancavelica, Huancavelica" never reads as a repeated name.
   const where = [
-    shape.id.length === 6 ? names.get(shape.id.slice(0, 4)) : undefined,
+    shape.id.length === 6 && names.get(shape.id.slice(0, 4))
+      ? `provincia de ${names.get(shape.id.slice(0, 4))}`
+      : undefined,
     shape.id.length > 2 ? names.get(shape.dep) : undefined,
   ]
     .filter(Boolean)
@@ -596,10 +614,18 @@ function PlaceCard({
     });
     const puesto = all.filter((v) => v > mine).length + 1;
     const nombre = CHIPS.find(([k]) => k === m)?.[1].toLowerCase() ?? "";
-    return `Puesto ${count(puesto)} de ${count(all.length)} ${LEVELS[level].plural}${nombre ? ` en ${nombre}` : ""}`;
-  }, [shape, m, peers, level]);
+    const pais = `Puesto ${count(puesto)} de ${count(all.length)} ${LEVELS[level].plural} del país${nombre ? ` en ${nombre}` : ""}`;
+    if (level === "dep") return pais;
+    const own = peers.filter((p) => p.dep === shape.dep);
+    const vals = own.flatMap((p) => {
+      const v = value(p, m);
+      return v === undefined ? [] : [v];
+    });
+    const aqui = vals.filter((v) => v > mine).length + 1;
+    return `${pais}. En ${names.get(shape.dep) ?? "su departamento"}: puesto ${count(aqui)} de ${count(vals.length)}`;
+  }, [shape, m, peers, level, names]);
   return (
-    <div className="glass glass-border animate-in order-2 flex flex-col gap-3 rounded-3xl p-4 max-lg:glass-solid max-lg:fixed max-lg:inset-x-2 max-lg:bottom-2 max-lg:z-50 max-lg:max-h-[72dvh] max-lg:overflow-y-auto max-lg:shadow-2xl lg:order-none">
+    <div className="glass glass-border animate-in order-2 flex flex-col gap-3 rounded-3xl p-4 max-lg:glass-solid max-lg:fixed max-lg:inset-x-2 max-lg:bottom-2 max-lg:z-50 max-lg:max-h-[42dvh] max-lg:overflow-y-auto max-lg:shadow-2xl max-lg:[&>*]:shrink-0 lg:order-none">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[10.5px] tracking-[0.06em] text-muted-foreground uppercase">
@@ -1235,7 +1261,9 @@ function Tooltip({
 }) {
   const { shape, level } = hit;
   const where = [
-    level === "dist" ? names.get(shape.id.slice(0, 4)) : undefined,
+    level === "dist" && names.get(shape.id.slice(0, 4))
+      ? `provincia de ${names.get(shape.id.slice(0, 4))}`
+      : undefined,
     level !== "dep" ? names.get(shape.dep) : undefined,
   ]
     .filter(Boolean)
