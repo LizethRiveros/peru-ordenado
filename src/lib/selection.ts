@@ -1,7 +1,13 @@
 import { LEVELS, type Level, METRICS, type Metric } from "@/lib/shapes";
 
 export type View = "mapa" | "ordenado";
-export type Selection = { level: Level; view: View; metric: Metric };
+export type Selection = {
+  level: Level;
+  view: View;
+  metric: Metric;
+  /** Department id (`09` = Huancavelica) to show on its own; absent = all of Peru. */
+  dep?: string;
+};
 
 export const DEFAULT: Selection = {
   level: "dep",
@@ -21,7 +27,9 @@ export function parseSelection(p: Params): Partial<Selection> {
   const level = get(p, "nivel");
   const view = get(p, "vista");
   const metric = get(p, "orden");
+  const dep = get(p, "dep");
   return {
+    dep: dep && /^\d{2}$/.test(dep) ? dep : undefined,
     level: level && level in LEVELS ? (level as Level) : undefined,
     view: view === "mapa" || view === "ordenado" ? view : undefined,
     metric: metric && metric in METRICS ? (metric as Metric) : undefined,
@@ -33,6 +41,7 @@ export function withDefaults(p: Partial<Selection>): Selection {
     level: p.level ?? DEFAULT.level,
     view: p.view ?? DEFAULT.view,
     metric: p.metric ?? DEFAULT.metric,
+    dep: p.dep,
   };
 }
 

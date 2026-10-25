@@ -7,6 +7,7 @@ import {
   type Box,
   gridLayout,
   LABEL_H,
+  labelWidth,
   mapLayout,
   type Place,
 } from "@/lib/layout";
@@ -56,9 +57,13 @@ export function valueLabel(shape: Shape, metric: Metric): string {
   if (metric === "area") return km2(shape.area);
   if (metric === "digital")
     return shape.digital === undefined ? "sin datos" : `${shape.digital}/100`;
-  if (metric === "ornato") {
+  if (metric === "ornato" || metric === "quipu" || metric === "cobertura") {
     const v = value(shape, metric);
     return v === undefined ? "sin datos" : pct(v);
+  }
+  if (metric === "emergencias" || metric === "zonas") {
+    const v = value(shape, metric);
+    return v === undefined ? "sin datos" : `${v.toFixed(1)}`;
   }
   if (!shape.inv) return "sin datos";
   return metric === "inversion"
@@ -73,6 +78,7 @@ export function Stage({
   metric,
   label,
   highlight,
+  allNames = false,
   onHover,
 }: {
   data: Dataset;
@@ -82,6 +88,8 @@ export function Stage({
   label: string;
   /** Ids at the current level to ring and call out, used by the story. */
   highlight?: string[];
+  /** Name every shape in the sorted view, shrinking them until the names fit. */
+  allNames?: boolean;
   onHover: (
     hit: { shape: Shape; level: Level; x: number; y: number } | null,
   ) => void;
@@ -111,7 +119,7 @@ export function Stage({
       const shapes = data[lvl];
       return vw === "mapa"
         ? mapLayout(shapes, size.current)
-        : gridLayout(sortShapes(shapes, m), size.current);
+        : gridLayout(sortShapes(shapes, m), size.current, allNames);
     };
 
     const retarget = (
@@ -296,7 +304,10 @@ export function Stage({
       for (const it of labels) {
         const { x, y, s, a } = it.cur;
         const bottom = y + ((it.shape.bbox[3] - it.shape.bbox[1]) * s) / 2;
-        const w = Math.max((it.shape.bbox[2] - it.shape.bbox[0]) * s, 44);
+        const w = Math.max(
+          (it.shape.bbox[2] - it.shape.bbox[0]) * s,
+          labelWidth(it.shape.name),
+        );
         ctx.globalAlpha = a;
         ctx.fillStyle = ink;
         ctx.font = `500 9.5px ${font}`;

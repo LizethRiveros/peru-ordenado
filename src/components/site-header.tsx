@@ -24,9 +24,20 @@ function Mark() {
         className="fill-foreground/10 stroke-foreground/20"
       />
       <path
-        d="M7 6h4v5H7zM13 6h4v3h-4zM13 11h4v7h-4zM7 13h4v5H7z"
-        className="fill-accent"
+        d="M5 6.5h14"
+        className="stroke-accent"
+        strokeWidth="1.6"
+        strokeLinecap="round"
       />
+      <path
+        d="M8 6.5v6M12 6.5v10M16 6.5v4"
+        className="stroke-accent"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+      />
+      <circle cx="8" cy="12.5" r="1.5" className="fill-accent" />
+      <circle cx="12" cy="16.5" r="1.5" className="fill-accent" />
+      <circle cx="16" cy="10.5" r="1.5" className="fill-accent" />
     </svg>
   );
 }

@@ -4,7 +4,8 @@ import { ImageResponse } from "next/og";
 import { colorFor, toRgb } from "@/lib/color";
 import { gridLayout, mapLayout } from "@/lib/layout";
 import { type Selection, selectionTitle } from "@/lib/selection";
-import { type Dataset, value } from "@/lib/shapes";
+import { figure } from "@/lib/figure";
+import { type Dataset, METRICS, type Metric, value } from "@/lib/shapes";
 
 export const ogSize = { width: 1200, height: 630 };
 const asset = (f: string) =>
@@ -145,6 +146,99 @@ export async function ogImage(sel: Selection) {
       fonts: [
         { name: "Fraunces", data: serif, weight: 400, style: "normal" },
         { name: "Fraunces", data: serifItalic, weight: 300, style: "italic" },
+        { name: "Inter", data: sans, weight: 400, style: "normal" },
+        { name: "Inter", data: sansMedium, weight: 500, style: "normal" },
+      ],
+    },
+  );
+}
+
+/** 1200×630 card for one place: its name, the one number that matters, and its shape. */
+export async function ogPlace(id: string, metric: Metric) {
+  const data = await loadData();
+  const shape = [...data.dist, ...data.prov, ...data.dep].find((s) => s.id === id);
+  if (!shape) return ogImage({ level: "dep", view: "mapa", metric: "area" });
+  const [serif, sans, sansMedium] = await Promise.all([
+    asset("fraunces-latin-400-normal.ttf"),
+    asset("inter-latin-400-normal.ttf"),
+    asset("inter-latin-500-normal.ttf"),
+  ]);
+  const name = (i: string) => data.dep.concat(data.prov).find((s) => s.id === i)?.name;
+  const where = [
+    shape.id.length === 6 ? name(shape.id.slice(0, 4)) : undefined,
+    shape.id.length > 2 ? name(shape.dep) : undefined,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const m = metric === "area" || value(shape, metric) !== undefined ? metric : "area";
+  const fig = figure(shape, m);
+  const [x0, y0, x1, y1] = shape.bbox;
+  const k = Math.min(500 / (x1 - x0), 500 / (y1 - y0));
+  const fill = toRgb(colorFor(shape, m, false, [1, 1e9]));
+  return new ImageResponse(
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        background: "#f6eddf",
+        color: "#3a2a1c",
+        fontFamily: "Inter",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          width: 650,
+          padding: "52px 0 48px 64px",
+        }}
+      >
+        <div style={{ display: "flex", fontSize: 22, fontWeight: 500, color: "#b5522b" }}>
+          PERÚ, ORDENADO · {METRICS[m].label}
+        </div>
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          <div style={{ display: "flex", fontFamily: "Fraunces", fontSize: 74, lineHeight: 1 }}>
+            {shape.name}
+          </div>
+          <div style={{ display: "flex", fontSize: 24, color: "#7a6552", marginTop: 8 }}>
+            {where}
+          </div>
+          <div
+            style={{
+              display: "flex",
+              fontFamily: "Fraunces",
+              fontSize: 128,
+              lineHeight: 1,
+              color: "#b5522b",
+              marginTop: 28,
+            }}
+          >
+            {fig.big}
+          </div>
+          <div style={{ display: "flex", fontSize: 26, color: "#3a2a1c", maxWidth: 520 }}>
+            {fig.unit}
+          </div>
+        </div>
+        <div style={{ display: "flex", fontSize: 18, color: "#857b6e" }}>
+          Busca el tuyo · Crafter Research · datos abiertos del MEF
+        </div>
+      </div>
+      <svg width="550" height="630" viewBox="0 0 550 630" aria-hidden="true">
+        <path
+          d={shape.d}
+          fill={fill}
+          stroke="#f6eddf"
+          strokeWidth={2 / k}
+          transform={`translate(${(275 - ((x0 + x1) / 2) * k).toFixed(1)} ${(315 - ((y0 + y1) / 2) * k).toFixed(1)}) scale(${k.toFixed(4)})`}
+        />
+      </svg>
+    </div>,
+    {
+      ...ogSize,
+      fonts: [
+        { name: "Fraunces", data: serif, weight: 400, style: "normal" },
         { name: "Inter", data: sans, weight: 400, style: "normal" },
         { name: "Inter", data: sansMedium, weight: 500, style: "normal" },
       ],

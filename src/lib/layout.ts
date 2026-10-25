@@ -31,23 +31,57 @@ export function mapLayout(shapes: Shape[], box: Box): Map<string, Place> {
 
 export const LABEL_H = 22;
 const LABEL_MIN_W = 44;
+const LABEL_MAX_W = 150;
+
+let ruler: CanvasRenderingContext2D | null | undefined;
+const widths = new Map<string, number>();
+
+/** Ancho real del nombre en mayúsculas (9.5px, peso 500) si hay canvas; si no, una estimación holgada. */
+function textWidth(upper: string): number {
+  const known = widths.get(upper);
+  if (known !== undefined) return known;
+  if (ruler === undefined) {
+    ruler =
+      typeof document === "undefined"
+        ? null
+        : document.createElement("canvas").getContext("2d");
+    if (ruler) ruler.font = "500 9.5px Inter, system-ui, sans-serif";
+  }
+  const w = ruler ? ruler.measureText(upper).width * 1.08 : upper.length * 7.2;
+  widths.set(upper, w);
+  return w;
+}
+
+/** Ancho que necesita el nombre para no cortarse; la etiqueta ocupa su celda, hasta un tope. */
+export const labelWidth = (name: string) =>
+  Math.min(
+    LABEL_MAX_W,
+    Math.max(LABEL_MIN_W, Math.ceil(textWidth(name.toUpperCase()) + 4)),
+  );
 
 type Row = { items: Shape[]; w: number; h: number; labeled: boolean };
 
-function pack(order: Shape[], s: number, width: number, gap: number): Row[] {
+function pack(
+  order: Shape[],
+  s: number,
+  width: number,
+  gap: number,
+  all: boolean,
+): Row[] {
   const rows: Row[] = [];
   let row: Row = { items: [], w: 0, h: 0, labeled: false };
   for (const sh of order) {
     const w = Math.max((sh.bbox[2] - sh.bbox[0]) * s, 1);
     const h = Math.max((sh.bbox[3] - sh.bbox[1]) * s, 1);
-    const cell = Math.max(w, w >= LABEL_MIN_W ? LABEL_MIN_W : 0);
+    const labeled = all || w >= LABEL_MIN_W;
+    const cell = Math.max(w, labeled ? labelWidth(sh.name) : 0);
     if (row.items.length && row.w + gap + cell > width) {
       rows.push(row);
       row = { items: [], w: 0, h: 0, labeled: false };
     }
     row.w += (row.items.length ? gap : 0) + cell;
     row.h = Math.max(row.h, h);
-    row.labeled ||= w >= LABEL_MIN_W;
+    row.labeled ||= labeled;
     row.items.push(sh);
   }
   if (row.items.length) rows.push(row);
@@ -60,9 +94,14 @@ const height = (rows: Row[], gap: number) =>
 
 /**
  * Sorted view: shapes keep their true relative size (one scale for all) and flow into rows in the
- * given order, largest scale that still fits the box.
+ * given order, largest scale that still fits the box. With `all`, every shape gets its name, and the
+ * scale shrinks until the names fit.
  */
-export function gridLayout(order: Shape[], box: Box): Map<string, Place> {
+export function gridLayout(
+  order: Shape[],
+  box: Box,
+  all = false,
+): Map<string, Place> {
   const width = box.w - 2 * box.pad;
   const gapFor = (s: number) => Math.max(4, Math.min(18, s * 6));
   let lo = 0.01;
@@ -70,7 +109,7 @@ export function gridLayout(order: Shape[], box: Box): Map<string, Place> {
   for (let i = 0; i < 40; i++) {
     const mid = (lo + hi) / 2;
     if (
-      height(pack(order, mid, width, gapFor(mid)), gapFor(mid)) <=
+      height(pack(order, mid, width, gapFor(mid), all), gapFor(mid)) <=
       box.h - 2 * box.pad
     )
       lo = mid;
@@ -78,7 +117,7 @@ export function gridLayout(order: Shape[], box: Box): Map<string, Place> {
   }
   const s = lo;
   const gap = gapFor(s);
-  const rows = pack(order, s, width, gap);
+  const rows = pack(order, s, width, gap, all);
   const out = new Map<string, Place>();
   let y = box.pad + (box.h - 2 * box.pad - height(rows, gap)) / 2;
   for (const row of rows) {
@@ -86,8 +125,8 @@ export function gridLayout(order: Shape[], box: Box): Map<string, Place> {
     for (const sh of row.items) {
       const w = (sh.bbox[2] - sh.bbox[0]) * s;
       const h = (sh.bbox[3] - sh.bbox[1]) * s;
-      const label = w >= LABEL_MIN_W;
-      const cell = Math.max(w, label ? LABEL_MIN_W : 0);
+      const label = all || w >= LABEL_MIN_W;
+      const cell = Math.max(w, label ? labelWidth(sh.name) : 0);
       out.set(sh.id, { x: x + cell / 2, y: y + row.h - h / 2, s, label });
       x += cell + gap;
     }

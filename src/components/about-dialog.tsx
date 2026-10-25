@@ -138,6 +138,44 @@ export function AboutDialog({
           </section>
 
           <section className="flex flex-col gap-1.5 text-sm leading-relaxed text-foreground/85">
+            <h3 className="font-medium text-foreground">Más capas de datos</h3>
+            <p>
+              <strong>Avance del año:</strong> la inversión municipal (genérica
+              2.6) del año en curso, devengado hasta el último mes completo
+              entre PIM, del mismo portal de Datos Abiertos del MEF, procesado
+              con quipu. <strong>Señal 4G:</strong> OSIPTEL, cobertura móvil por
+              centro poblado; cuenta lugares, no personas.{" "}
+              <strong>Emergencias:</strong> decretos de estado de emergencia por
+              lluvias o déficit hídrico 2017-2024 de la PCM; cada prórroga
+              cuenta. <strong>Zonas críticas:</strong> inventario de peligros
+              geológicos del INGEMMET, solo en unos 1,000 distritos; el resto es
+              sin datos, no cero. <strong>Gentilicios:</strong> los de los 25
+              departamentos escritos a mano; el resto, tal como dice la ficha
+              de Wikipedia de cada lugar, sin verificar uno por uno. Los
+              nombres con tilde salen de Wikidata más una revisión a mano.
+            </p>
+          </section>
+
+          <section className="flex flex-col gap-1.5 text-sm leading-relaxed text-foreground/85">
+            <h3 className="font-medium text-foreground">Inspiración</h3>
+            <p>
+              Inspirado en{" "}
+              <a
+                href="https://cristianyarasca.com/taxonomia-peru/"
+                target="_blank"
+                rel="noreferrer"
+                className="text-accent underline underline-offset-4"
+              >
+                «Taxonomía territorial del Perú»
+              </a>{" "}
+              de Cristian Yarasca, que ordena departamentos, provincias y
+              distritos por área, población y densidad. Aquí la misma idea se
+              usa para otras preguntas: presupuesto, territorio y presencia
+              digital.
+            </p>
+          </section>
+
+          <section className="flex flex-col gap-1.5 text-sm leading-relaxed text-foreground/85">
             <h3 className="font-medium text-foreground">Quién lo hace</h3>
             <p>
               <a
