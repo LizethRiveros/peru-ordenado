@@ -20,5 +20,8 @@ for row in ws.iter_rows(values_only=True):
     ubigeo = str(row[0] or "")
     if cols and len(ubigeo) == 6 and ubigeo.isdigit() and ubigeo != "000000" and isinstance(row[cols[AÑO]], (int, float)):
         out[ubigeo] = int(row[cols[AÑO]])
+# El mapa dibuja Mazamari y Pangoa como una sola forma (120699): suma de los dos distritos.
+if "120604" in out and "120606" in out:
+    out["120699"] = out["120604"] + out["120606"]
 json.dump({"año": AÑO, "pob": out}, open("data/poblacion-2025.json", "w"), separators=(",", ":"))
 print(len(out), "códigos", sum(v for k, v in out.items() if not k.endswith("00")), "habitantes en distritos")
