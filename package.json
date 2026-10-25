@@ -13,7 +13,8 @@
     "data:geo": "bun scripts/fetch-geo.ts",
     "data:mef": "bun scripts/fetch-mef.ts",
     "data:jev": "env -u AI_GATEWAY_API_KEY bun --env-file=.env.local scripts/classify-projects.ts",
-    "data:build": "bun scripts/build-shapes.ts"
+    "data:build": "bun scripts/build-shapes.ts && bun scripts/apply-names.ts",
+    "data:names": "bun scripts/apply-names.ts"
   },
   "packageManager": "bun@1.3.11",
   "dependencies": {
