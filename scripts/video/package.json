@@ -1,0 +1,9 @@
+{
+  "name": "quipu-promo-video",
+  "private": true,
+  "type": "commonjs",
+  "description": "Generator for the Quipu promo video and GIF. Not part of the published package.",
+  "dependencies": {
+    "puppeteer-core": "^24.0.0"
+  }
+}
