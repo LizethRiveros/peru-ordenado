@@ -50,3 +50,13 @@ test("oklch converts to the expected sRGB", async () => {
   // oklch(0.628 0.2577 29.23) is sRGB red
   expect(toRgb("oklch(0.628 0.2577 29.23)")).toBe("rgb(255,0,0)");
 });
+
+test("titles agree in gender with the level", async () => {
+  const { selectionTitle } = await import("@/lib/selection");
+  expect(
+    selectionTitle({ level: "prov", view: "ordenado", metric: "area" }, 196),
+  ).toStartWith("196 provincias ordenadas");
+  expect(
+    selectionTitle({ level: "dist", view: "ordenado", metric: "area" }, 1873),
+  ).toStartWith("1,873 distritos ordenados");
+});

@@ -12,7 +12,7 @@ import {
   ornatoColor,
 } from "@/lib/color";
 import { count, km2, pct, soles } from "@/lib/format";
-import { parseSelection, type Selection } from "@/lib/selection";
+import { parseSelection, type Selection, selectionTitle } from "@/lib/selection";
 import {
   certainty,
   type Dataset,
@@ -114,10 +114,7 @@ export function Explorer() {
   };
 
   const shapes = data?.[sel.level] ?? [];
-  const title =
-    sel.view === "mapa"
-      ? `${count(shapes.length)} ${LEVELS[sel.level].plural}`
-      : `${count(shapes.length)} ${LEVELS[sel.level].plural} ${METRICS[sel.metric].title}`;
+  const title = selectionTitle(sel, shapes.length);
 
   const ranked = useMemo(
     () =>

@@ -39,5 +39,8 @@ export function withDefaults(p: Partial<Selection>): Selection {
 export function selectionTitle(sel: Selection, n: number): string {
   const count = new Intl.NumberFormat("es-PE").format(n);
   const base = `${count} ${LEVELS[sel.level].plural}`;
-  return sel.view === "mapa" ? base : `${base} ${METRICS[sel.metric].title}`;
+  if (sel.view === "mapa") return base;
+  const title = METRICS[sel.metric].title;
+  // "provincias" is feminine; the metric titles are written for departamentos and distritos.
+  return `${base} ${sel.level === "prov" ? title.replace(/^ordenados/, "ordenadas") : title}`;
 }

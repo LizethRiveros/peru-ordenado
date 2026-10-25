@@ -91,9 +91,15 @@ export function colorFor(
 
 /** `oklch(l c h[ / a])` → `rgb(...)`, for renderers without oklch support (satori). */
 export function toRgb(color: string): string {
-  const m = color.match(/oklch\(([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\)/);
+  const m = color.match(
+    /oklch\(([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\)/,
+  );
   if (!m) return color;
-  const [l, c, h] = [Number(m[1]), Number(m[2]), (Number(m[3]) * Math.PI) / 180];
+  const [l, c, h] = [
+    Number(m[1]),
+    Number(m[2]),
+    (Number(m[3]) * Math.PI) / 180,
+  ];
   const a = c * Math.cos(h);
   const b = c * Math.sin(h);
   const l_ = (l + 0.3963377774 * a + 0.2158037573 * b) ** 3;
