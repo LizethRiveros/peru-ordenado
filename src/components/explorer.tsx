@@ -318,10 +318,10 @@ export function Explorer() {
         <aside className="contents lg:flex lg:min-h-0 lg:flex-col lg:gap-5 lg:overflow-y-auto lg:pt-8 lg:pr-1">
           <div className="animate-in order-first pt-3 lg:pt-0">
             <h1 className="font-display text-5xl leading-[0.95] tracking-[-0.02em] sm:text-6xl">
-              Perú, <em className="font-light">ordenado</em>
+              Qui<em className="font-light">pu</em>
             </h1>
             <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
-              El mismo país, desarmado y vuelto a ordenar. Cada forma es un
+              El Perú desarmado y vuelto a ordenar, con la información que importa. Cada forma es un
               territorio real, a escala; cambia el criterio y mira quién queda
               arriba.
             </p>
@@ -502,7 +502,7 @@ function PlaceCard({
     .filter(Boolean)
     .join(" ");
   const url = `${window.location.origin}/?lugar=${shape.id}&orden=${m}`;
-  const text = `${shape.name}${shape.gentilicio ? ` (${shape.gentilicio})` : ""}: ${fig.big} ${fig.unit}. Mira el tuyo en Perú, ordenado:`;
+  const text = `${shape.name}${shape.gentilicio ? ` (${shape.gentilicio})` : ""}: ${fig.big} ${fig.unit}. Mira el tuyo en Quipu:`;
   const level = shape.id.length === 2 ? "dep" : shape.id.length === 4 ? "prov" : "dist";
   return (
     <div className="glass glass-border animate-in order-2 flex flex-col gap-3 rounded-3xl p-4 lg:order-none">
@@ -729,7 +729,7 @@ function ShareButton({ title }: { title: string }) {
         const url = window.location.href;
         if (navigator.share) {
           await navigator
-            .share({ title: "Perú, ordenado", text: title, url })
+            .share({ title: "Quipu", text: title, url })
             .catch(() => {});
           return;
         }

@@ -82,7 +82,7 @@ export async function renderCard(c: CardInput): Promise<Blob> {
   ctx.fillStyle = "#3a2a1c";
   ctx.textAlign = "left";
   ctx.font = `600 34px ${sans}`;
-  ctx.fillText("PERÚ, ORDENADO", 80, 300);
+  ctx.fillText("QUIPU", 80, 300);
   ctx.fillStyle = "#7a6552";
   ctx.font = `500 30px ${sans}`;
   ctx.fillText(c.question, 80, 348);

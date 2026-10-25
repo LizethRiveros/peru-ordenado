@@ -18,7 +18,7 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://peru-ordenado.crafter.ing"),
-  title: "Perú, ordenado",
+  title: "Quipu · el Perú, desarmado",
   description:
     "El mapa del Perú desarmado y vuelto a ordenar: departamentos, provincias y distritos a escala, por área e inversión municipal. Crafter Research.",
 };

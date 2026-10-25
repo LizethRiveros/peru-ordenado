@@ -1,4 +1,4 @@
-# Perú, ordenado
+# Quipu
 
 Unofficial Crafter Research prototype. The map of Peru taken apart: every department, province and district leaves its place and lines up in rows, at true relative scale, sorted by the criterion you pick. It is not a government site. Inspired by ["Taxonomía territorial del Perú"](https://cristianyarasca.com/taxonomia-peru/) by Cristian Yarasca.
 
