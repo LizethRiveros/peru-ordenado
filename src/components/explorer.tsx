@@ -30,6 +30,7 @@ import {
 import {
   certainty,
   type Dataset,
+  guide,
   LEVELS,
   type Level,
   METRICS,
@@ -190,7 +191,16 @@ export function Explorer() {
             Cargando {count(1873)} distritos…
           </div>
         )}
-        {hit && <Tooltip hit={hit} metric={sel.metric} names={names} />}
+        {hit && (
+          <Tooltip
+            hit={hit}
+            metric={sel.metric}
+            names={names}
+            rank={ranked.findIndex((s) => s.id === hit.shape.id) + 1}
+            total={ranked.length}
+            country={data ? countryText(data, sel.metric) : undefined}
+          />
+        )}
       </div>
       {step === null && (
         <div className="absolute inset-x-0 bottom-3 z-10 flex justify-center">
@@ -331,6 +341,11 @@ export function Explorer() {
               </div>
             </Field>
             <Legend metric={sel.metric} shapes={shapes} />
+            <Field label="Cómo leerlo">
+              <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+                {guide(sel.metric, sel.level)}
+              </p>
+            </Field>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -793,33 +808,57 @@ function sentence(shape: Shape, metric: Metric): string | undefined {
   }
 }
 
-/** Datos sueltos de la forma, con nombres claros. Lo que no tiene dato no aparece. */
-function details(shape: Shape, metric: Metric): [string, string][] {
-  const rows: [Metric | null, string, string | undefined][] = [
-    ["area", "Superficie", km2(shape.area)],
-    ["inversion", "Presupuesto para obras 2024", shape.inv ? soles(shape.inv.pim) : undefined],
-    ["ejecucion", "Gastado de ese presupuesto", shape.inv?.pim ? pct(shape.inv.dev / shape.inv.pim) : undefined],
-    ["quipu", "Gastado este año", shape.avance?.pim ? pct(shape.avance.dev / shape.avance.pim) : undefined],
-    [null, "Mismo punto del año pasado", shape.avance && shape.avance.pimPrev > 0 ? pct(shape.avance.devPrev / shape.avance.pimPrev) : undefined],
-    ["cobertura", "Centros poblados con 4G", shape.terr?.cp ? pct(shape.terr.cp4g / shape.terr.cp) : undefined],
-    ["emergencias", "Decretos de emergencia", shape.terr?.emergN ? (shape.terr.emerg / shape.terr.emergN).toFixed(1) : undefined],
-    ["zonas", "Zonas críticas", shape.terr?.zonasN ? (shape.terr.zonas / shape.terr.zonasN).toFixed(1) : undefined],
-    ["ornato", "Obras en plazas, parques y arcos", shape.mix && shape.inv?.pim ? pct(shape.mix.ornato / shape.inv.pim) : undefined],
-    ["digital", "Servicios digitales", shape.digital !== undefined ? `${shape.digital}/100` : undefined],
-  ];
-  return rows.flatMap(([m, label, v]) =>
-    v === undefined || (m !== null && m === metric) ? [] : [[label, v] as [string, string]],
-  );
+/** Un dato de apoyo por criterio, solo si existe: lo justo para entender la frase. */
+function support(shape: Shape, metric: Metric): [string, string][] {
+  const pim = shape.avance?.pim;
+  const rows: Partial<Record<Metric, [string, string | undefined]>> = {
+    quipu: ["Plata del año para obras", pim ? soles(pim) : undefined],
+    ejecucion: ["Plata que tenía para obras (2024)", shape.inv ? soles(shape.inv.pim) : undefined],
+    inversion: ["Gastó de esa plata", shape.inv?.pim ? pct(shape.inv.dev / shape.inv.pim) : undefined],
+    ornato: ["Plata total para obras (2024)", shape.inv ? soles(shape.inv.pim) : undefined],
+  };
+  const r = rows[metric];
+  return r?.[1] ? [[r[0], r[1]]] : [];
+}
+
+/** El país en conjunto para el mismo criterio, en palabras. Sin dato, sin frase. */
+function countryText(data: Dataset, metric: Metric): string | undefined {
+  const deps = data.dep;
+  const sum = (f: (s: Shape) => number) => deps.reduce((t, s) => t + f(s), 0);
+  const share = (num: number, den: number) =>
+    den > 0 ? `${de100(num / den)} de cada 100` : undefined;
+  switch (metric) {
+    case "ejecucion":
+      return share(sum((s) => s.inv?.dev ?? 0), sum((s) => s.inv?.pim ?? 0));
+    case "quipu":
+      return share(sum((s) => s.avance?.dev ?? 0), sum((s) => s.avance?.pim ?? 0));
+    case "cobertura":
+      return share(sum((s) => s.terr?.cp4g ?? 0), sum((s) => s.terr?.cp ?? 0));
+    case "ornato":
+      return share(sum((s) => s.mix?.ornato ?? 0), sum((s) => (s.mix ? (s.inv?.pim ?? 0) : 0)));
+    case "emergencias": {
+      const n = sum((s) => s.terr?.emergN ?? 0);
+      return n ? `${(sum((s) => s.terr?.emerg ?? 0) / n).toFixed(1)} decretos por distrito` : undefined;
+    }
+    default:
+      return undefined;
+  }
 }
 
 function Tooltip({
   hit,
   metric,
   names,
+  rank,
+  total,
+  country,
 }: {
   hit: Hit;
   metric: Metric;
   names: Map<string, string>;
+  rank: number;
+  total: number;
+  country?: string;
 }) {
   const { shape, level } = hit;
   const where = [
@@ -831,7 +870,7 @@ function Tooltip({
   const left = hit.x > 260 ? hit.x - 264 : hit.x + 16;
   const card = useRef<HTMLDivElement>(null);
   const main = sentence(shape, metric);
-  const rows = details(shape, metric);
+  const rows = support(shape, metric);
   const unsure = metric === "ornato" && shape.mix && shape.inv?.pim ? certainty(shape) : 1;
   // The card grows with the data it has: keep it inside the panel.
   // biome-ignore lint/correctness/useExhaustiveDependencies: re-run on every hover move and metric change
@@ -866,6 +905,12 @@ function Tooltip({
       {main && (
         <p className="mt-2.5 rounded-xl bg-accent/10 px-2.5 py-2 text-[13px] leading-snug text-foreground">
           {main}
+        </p>
+      )}
+      {main && rank > 0 && (
+        <p className="mt-2 text-[11.5px] leading-snug text-muted-foreground">
+          Puesto {rank} de {total} {LEVELS[level].plural}, de mayor a menor.
+          {country ? ` El país en conjunto: ${country}.` : ""}
         </p>
       )}
       {unsure < 0.995 && (
