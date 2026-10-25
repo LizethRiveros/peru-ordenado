@@ -67,6 +67,8 @@ export function Explorer() {
     q.set("nivel", sel.level);
     q.set("vista", sel.view);
     q.set("orden", sel.metric);
+    if (sel.dep) q.set("dep", sel.dep);
+    else q.delete("dep");
     window.history.replaceState(null, "", `?${q}`);
   }, [sel, ready]);
 
@@ -100,7 +102,12 @@ export function Explorer() {
     setSel((s) => ({ ...s, ...n }));
   };
 
-  const shapes = data?.[sel.level] ?? [];
+  // A single department, when one is chosen: provinces and districts are those inside it.
+  const scope = useMemo(
+    () => (data && sel.dep ? inDepartment(data, sel.dep) : data),
+    [data, sel.dep],
+  );
+  const shapes = scope?.[sel.level] ?? [];
   const title = selectionTitle(sel, shapes.length);
 
   const ranked = useMemo(
@@ -119,6 +126,8 @@ export function Explorer() {
     return m;
   }, [data]);
 
+  const depName = sel.dep ? names.get(sel.dep) : undefined;
+
   const stage = (
     <section
       className={
@@ -129,7 +138,7 @@ export function Explorer() {
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col items-center gap-1 px-4 pt-4 text-center sm:pt-5">
         <p className="text-[13px] font-semibold tracking-[0.18em] text-foreground">
-          PERÚ
+          {depName ? depName.toUpperCase() : "PERÚ"}
         </p>
         <p
           key={title}
@@ -147,9 +156,10 @@ export function Explorer() {
               : "bottom-10"
         }`}
       >
-        {data ? (
+        {scope ? (
           <Stage
-            data={data}
+            key={sel.dep ?? "peru"}
+            data={scope}
             level={sel.level}
             view={sel.view}
             metric={sel.metric}
@@ -252,6 +262,22 @@ export function Explorer() {
                 ]}
                 onChange={(level) => choose({ level })}
               />
+            </Field>
+            <Field label="Departamento">
+              <select
+                value={sel.dep ?? ""}
+                onChange={(e) => choose({ dep: e.target.value || undefined })}
+                className="rounded-xl border border-border bg-foreground/[0.03] px-3 py-2 text-[13px] text-foreground"
+              >
+                <option value="">Todo el Perú</option>
+                {[...(data?.dep ?? [])]
+                  .sort((a, b) => a.name.localeCompare(b.name, "es"))
+                  .map((d) => (
+                    <option key={d.id} value={d.id}>
+                      {d.name}
+                    </option>
+                  ))}
+              </select>
             </Field>
             <Field label="Ordenar y colorear por">
               <div className="flex flex-col gap-1.5">
@@ -503,6 +529,15 @@ function ShareButton({ title }: { title: string }) {
       {copied ? "Copiado" : "Compartir"}
     </button>
   );
+}
+
+function inDepartment(data: Dataset, dep: string): Dataset {
+  return {
+    ...data,
+    dep: data.dep.filter((s) => s.id === dep),
+    prov: data.prov.filter((s) => s.dep === dep),
+    dist: data.dist.filter((s) => s.dep === dep),
+  };
 }
 
 function Field({
