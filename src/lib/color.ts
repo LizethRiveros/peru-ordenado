@@ -85,7 +85,8 @@ export function digitalColor(v: number): string {
  */
 export function quipuColor(r: number, [lo, hi]: [number, number]): string {
   const t = Math.max(0, Math.min(1, hi > lo ? (r - lo) / (hi - lo) : 0.5));
-  return `oklch(${(0.93 - 0.5 * t).toFixed(3)} ${(0.03 + 0.12 * t).toFixed(3)} ${(75 - 40 * t).toFixed(1)})`;
+  // Lightness stays in the middle band (0.84 → 0.52) so both ends read on paper and on the dark theme.
+  return `oklch(${(0.84 - 0.32 * t).toFixed(3)} ${(0.05 + 0.11 * t).toFixed(3)} ${(75 - 40 * t).toFixed(1)})`;
 }
 
 /** Color range for a metric over a set of shapes: percentiles of the ratio for quipu, PIM min/max otherwise. */

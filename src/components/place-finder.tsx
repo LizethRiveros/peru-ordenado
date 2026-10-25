@@ -54,7 +54,7 @@ export function PlaceFinder({
         id="lugar"
         value={q}
         onChange={(e) => setQ(e.target.value)}
-        placeholder="¿Dónde vives? Escribe tu distrito"
+        placeholder="Tu distrito: Acoria, Miraflores…"
         autoComplete="off"
         className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground focus:border-accent/60 focus:outline-none"
       />
