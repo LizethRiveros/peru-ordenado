@@ -1,11 +1,11 @@
-// Población proyectada (INEI, 30 de junio) a public/data/shapes.json. Entrada: data/raw/poblacion-2025.json,
+// Población proyectada (INEI, 30 de junio) a public/data/shapes.json. Entrada: data/poblacion-2025.json,
 // generado por scripts/poblacion.py. Distritos, provincias y departamentos traen su propia cifra oficial.
 // Idempotente: se puede correr sin rehacer `data:build`.
 import type { Dataset, Shape } from "../src/lib/shapes";
 
 const data: Dataset = await Bun.file("public/data/shapes.json").json();
 const { año, pob }: { año: number; pob: Record<string, number> } = await Bun.file(
-  "data/raw/poblacion-2025.json",
+  "data/poblacion-2025.json",
 ).json();
 
 const code = (s: Shape) => (s.id.length === 2 ? `${s.id}0000` : s.id.length === 4 ? `${s.id}00` : s.id);

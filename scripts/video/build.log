@@ -1,0 +1,75 @@
+wrote C:\Users\UNH\AppData\Local\Temp\claude\C--Users-UNH\9e738fb1-788f-427c-a558-0ac10e6966c4\scratchpad\peru-ordenado\scripts\video\.build\data.json {
+  id: "09",
+  name: "Huancavelica",
+} {
+  id: "090101",
+  name: "Huancavelica",
+  where: "Huancavelica, Huancavelica",
+  d: "",
+  bbox: [ 484.9, 883.5, 507.7, 902.6 ],
+  col: [ 218, 187, 151 ],
+  prev: 45,
+  mes: "septiembre",
+  rows: [
+    {
+      key: "quipu",
+      label: "Gasto",
+      text: "17 %",
+      frac: 0.10048102618920364,
+    }, {
+      key: "cobertura",
+      label: "Señal 4G",
+      text: "9 %",
+      frac: 0.3361838588989845,
+    }, {
+      key: "emergencias",
+      label: "Emergencias",
+      text: "8",
+      frac: 0.7787279529663281,
+    }, {
+      key: "zonas",
+      label: "Zonas críticas",
+      text: "5",
+      frac: 0.8256513026052105,
+    }, {
+      key: "digital",
+      label: "Digital",
+      text: "47",
+      frac: 0.8146853146853147,
+    }
+  ],
+}
+frame 0 / 810
+frame 60 / 810
+frame 120 / 810
+frame 180 / 810
+frame 240 / 810
+frame 300 / 810
+frame 360 / 810
+frame 420 / 810
+frame 480 / 810
+frame 540 / 810
+frame 600 / 810
+frame 660 / 810
+frame 720 / 810
+frame 780 / 810
+frame 0 / 810
+frame 60 / 810
+frame 120 / 810
+frame 180 / 810
+frame 240 / 810
+frame 300 / 810
+frame 360 / 810
+frame 420 / 810
+frame 480 / 810
+frame 540 / 810
+frame 600 / 810
+frame 660 / 810
+frame 720 / 810
+frame 780 / 810
+ok (1190700, 2) peak 0.9859732754104166
+wrote C:\Users\UNH\Videos\quipu\quipu-huancavelica-vertical.mp4
+wrote C:\Users\UNH\Videos\quipu\quipu-huancavelica-horizontal.mp4
+wrote C:\Users\UNH\Videos\quipu\quipu-huancavelica.gif
+(node:41248) [DEP0190] DeprecationWarning: Passing args to a child process with shell option true can lead to security vulnerabilities, as the arguments are not escaped, only concatenated.
+(Use `node --trace-deprecation ...` to show where the warning was created)

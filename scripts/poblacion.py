@@ -1,4 +1,4 @@
-"""Población proyectada por distrito (INEI) → data/raw/poblacion-2025.json {ubigeo: habitantes}.
+"""Población proyectada por distrito (INEI) → data/poblacion-2025.json {ubigeo: habitantes}.
 
 Fuente: INEI, «Población total proyectada al 30 de junio de cada año, según departamento, provincia y
 distrito, 2018-2026» (gob.pe/institucion/inei, información referencial). Uso:
@@ -20,5 +20,5 @@ for row in ws.iter_rows(values_only=True):
     ubigeo = str(row[0] or "")
     if cols and len(ubigeo) == 6 and ubigeo.isdigit() and ubigeo != "000000" and isinstance(row[cols[AÑO]], (int, float)):
         out[ubigeo] = int(row[cols[AÑO]])
-json.dump({"año": AÑO, "pob": out}, open("data/raw/poblacion-2025.json", "w"), separators=(",", ":"))
+json.dump({"año": AÑO, "pob": out}, open("data/poblacion-2025.json", "w"), separators=(",", ":"))
 print(len(out), "códigos", sum(v for k, v in out.items() if not k.endswith("00")), "habitantes en distritos")
