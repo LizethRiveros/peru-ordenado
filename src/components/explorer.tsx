@@ -326,8 +326,8 @@ export function Explorer() {
               Qui<em className="font-light">pu</em>
             </h1>
             <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
-              Tu municipalidad tiene plata para hacer obras. Aquí ves cuánta ya
-              gastó, distrito por distrito, y cómo le va frente a los demás.
+              ¿De qué distrito eres? Escríbelo y mira cuánto ha gastado su
+              municipalidad.
             </p>
             {headline && (
               <div className="mt-5 max-w-sm">
