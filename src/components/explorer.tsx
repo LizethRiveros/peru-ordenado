@@ -1135,7 +1135,7 @@ function sentence(shape: Shape, metric: Metric): string | undefined {
       const a = shape.avance;
       const antes =
         a && a.pimPrev > 0
-          ? ` A esta altura del año pasado iba en ${de100(a.devPrev / a.pimPrev)}.`
+          ? ` Hace un año, en este mismo mes, llevaba ${de100(a.devPrev / a.pimPrev)}.`
           : "";
       return `En lo que va del año gastó ${de100(v)} de cada 100 soles que tiene para obras.${antes}`;
     }
