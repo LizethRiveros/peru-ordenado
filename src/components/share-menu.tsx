@@ -59,7 +59,7 @@ export function ShareMenu({
           ? "Armando la imagen…"
           : state === "saved"
             ? "Imagen guardada: súbela a tu historia"
-            : "Historia para Instagram o Facebook"}
+            : "Compartir en mis historias"}
       </button>
       <div className="grid grid-cols-3 gap-2">
         <a

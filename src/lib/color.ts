@@ -15,11 +15,11 @@ const hash = (s: string) => {
 /** Size view: no data to encode, so warm paper tones that only tell neighbours apart. */
 export function departmentColor(shape: Shape, jitter: boolean): string {
   const n = Number.parseInt(shape.dep, 10) || 0;
-  const l = 0.6 + ((n * 37) % 7) * 0.035;
-  const c = 0.05 + ((n * 13) % 5) * 0.013;
-  const h = 40 + ((n * 17) % 50);
-  const dl = jitter ? (hash(shape.id) - 0.5) * 0.1 : 0;
-  return `oklch(${(l + dl).toFixed(3)} ${c.toFixed(3)} ${h})`;
+  // Atlas colors: one clear hue per department, a touch lighter or darker for each province or district.
+  const h = (n * 137.5) % 360;
+  const l = 0.74 + ((n * 37) % 5) * 0.015;
+  const dl = jitter ? (hash(shape.id) - 0.5) * 0.14 : 0;
+  return `oklch(${(l + dl).toFixed(3)} 0.1 ${h.toFixed(1)})`;
 }
 
 export const NO_DATA = "oklch(0.6 0.005 60 / 0.35)";
