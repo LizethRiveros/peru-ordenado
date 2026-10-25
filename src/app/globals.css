@@ -186,3 +186,26 @@ body {
   --label: oklch(0.72 0.01 120);
   --label-strong: oklch(0.95 0.005 100);
 }
+
+/* Story progress: one segment fills over the step's duration, then advances. */
+@keyframes story-fill {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
+/* The story timer is pacing, not motion: it keeps its duration under reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  .story-fill {
+    animation-duration: var(--story-ms) !important;
+  }
+}
+
+.story-fill {
+  animation-name: story-fill;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}

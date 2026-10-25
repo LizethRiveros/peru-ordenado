@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { colorFor } from "@/lib/color";
+import { colorFor, mixOklch, type Oklch, parseOklch } from "@/lib/color";
 import { km2, pct, soles } from "@/lib/format";
 import {
   type Box,
@@ -36,9 +36,9 @@ type Item = {
   cur: Frame;
   start: number;
   dur: number;
-  color: string;
-  /** Opacity multiplier: shapes whose Jev answers were unsure fade out in the ornament view. */
-  sure: number;
+  /** Fill and Jev-certainty opacity blend from the previous metric to the new one with the motion. */
+  color: { from: Oklch; to: Oklch };
+  sure: { from: number; to: number };
 };
 
 const ease = (t: number) => 1 - (1 - t) ** 4;
@@ -72,6 +72,7 @@ export function Stage({
   view,
   metric,
   label,
+  highlight,
   onHover,
 }: {
   data: Dataset;
@@ -79,6 +80,8 @@ export function Stage({
   view: View;
   metric: Metric;
   label: string;
+  /** Ids at the current level to ring and call out, used by the story. */
+  highlight?: string[];
   onHover: (
     hit: { shape: Shape; level: Level; x: number; y: number } | null,
   ) => void;
@@ -91,6 +94,8 @@ export function Stage({
   const raf = useRef(0);
   const settledAt = useRef(0);
   const redraw = useRef<() => void>(() => {});
+  const highlighted = useRef(new Set<string>());
+  const retargetTo = useRef<(next: typeof state.current) => void>(() => {});
 
   useEffect(() => {
     const el = canvas.current;
@@ -183,8 +188,18 @@ export function Stage({
             cur: from,
             start: now + (down || first ? delay(shape.id) : DUR * 0.55),
             dur: reduced ? 1 : DUR,
-            color: colorFor(shape, next.metric, next.level !== "dep", rng),
-            sure: sureFor(shape, next.metric),
+            color: {
+              from: parseOklch(
+                colorFor(shape, next.metric, next.level !== "dep", rng),
+              ),
+              to: parseOklch(
+                colorFor(shape, next.metric, next.level !== "dep", rng),
+              ),
+            },
+            sure: {
+              from: sureFor(shape, next.metric),
+              to: sureFor(shape, next.metric),
+            },
           });
         }
       } else {
@@ -198,8 +213,19 @@ export function Stage({
             to: { ...to, a: 1 },
             start: now + (moved ? delay(it.shape.id) : 0),
             dur: moved && !reduced ? DUR : 1,
-            color: colorFor(it.shape, next.metric, next.level !== "dep", rng),
-            sure: sureFor(it.shape, next.metric),
+            color: {
+              from: parseOklch(
+                mixOklch(it.color.from, it.color.to, progress(it, now)),
+              ),
+              to: parseOklch(
+                colorFor(it.shape, next.metric, next.level !== "dep", rng),
+              ),
+            },
+            sure: {
+              from:
+                it.sure.from + (it.sure.to - it.sure.from) * progress(it, now),
+              to: sureFor(it.shape, next.metric),
+            },
           });
         }
       }
@@ -219,6 +245,7 @@ export function Stage({
       const ink = styles.getPropertyValue("--label-strong");
       const muted = styles.getPropertyValue("--label");
       const labels: Item[] = [];
+      const callouts: Item[] = [];
       for (const it of items.current.values()) {
         const t = ease(Math.min(1, Math.max(0, (now - it.start) / it.dur)));
         const f = it.from;
@@ -243,15 +270,25 @@ export function Stage({
           dpr * (x - it.cx * s),
           dpr * (y - it.cy * s),
         );
-        ctx.globalAlpha = a * it.sure;
-        ctx.fillStyle = it.color;
+        ctx.globalAlpha = a * (it.sure.from + (it.sure.to - it.sure.from) * t);
+        ctx.fillStyle = mixOklch(it.color.from, it.color.to, t);
         ctx.fill(it.path);
+        const hl =
+          it.level === state.current.level &&
+          highlighted.current.has(it.shape.id);
+        if (hl && t > 0.6) {
+          ctx.globalAlpha = Math.min(1, (t - 0.6) / 0.3) * a;
+          ctx.lineWidth = 2.5 / s;
+          ctx.strokeStyle = ink;
+          ctx.stroke(it.path);
+          callouts.push(it);
+        }
         if (hovered.current === it.key) {
           ctx.lineWidth = 2 / s;
           ctx.strokeStyle = ink;
           ctx.stroke(it.path);
         }
-        if (g.label && t > 0.9) labels.push(it);
+        if (g.label && t > 0.9 && !hl) labels.push(it);
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.textAlign = "center";
@@ -273,6 +310,26 @@ export function Stage({
         ctx.font = `400 9px ${font}`;
         ctx.fillText(valueLabel(it.shape, m), x, bottom + LABEL_H - 3, w);
       }
+      const surface = styles.getPropertyValue("--surface");
+      for (const it of callouts) {
+        const { x, y, s, a } = it.cur;
+        const top = y - ((it.shape.bbox[3] - it.shape.bbox[1]) * s) / 2;
+        const text = `${it.shape.name} · ${valueLabel(it.shape, m)}`;
+        ctx.font = `500 12px ${font}`;
+        const w = ctx.measureText(text).width + 20;
+        const px = Math.min(Math.max(x, w / 2 + 6), size.current.w - w / 2 - 6);
+        const py = Math.max(top - 16, 14);
+        ctx.globalAlpha = a;
+        ctx.fillStyle = surface;
+        ctx.beginPath();
+        ctx.roundRect(px - w / 2, py - 12, w, 24, 12);
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = ink;
+        ctx.stroke();
+        ctx.fillStyle = ink;
+        ctx.fillText(text, px, py + 4);
+      }
       ctx.globalAlpha = 1;
     };
 
@@ -292,8 +349,18 @@ export function Stage({
       el.height = Math.round(r.height * dpr);
       const pad = r.width < 640 ? 12 : 28;
       const firstRun = size.current.w === 0;
+      // The observer also fires once on attach; only a real size change re-lays out.
+      if (
+        !firstRun &&
+        r.width === size.current.w &&
+        r.height === size.current.h
+      ) {
+        // A remount (dev StrictMode) cancelled the previous frame loop; resume any motion in flight.
+        loop();
+        return;
+      }
       size.current = { w: r.width, h: r.height, pad };
-      if (firstRun) retarget({ level, view: "mapa", metric }, state.current);
+      if (firstRun) retarget({ ...state.current, view: "mapa" }, state.current);
       else {
         const places = targets(
           state.current.level,
@@ -313,14 +380,30 @@ export function Stage({
       if (performance.now() >= settledAt.current) draw(performance.now());
     };
 
+    retargetTo.current = (next) => {
+      if (size.current.w > 0) retarget(state.current, next);
+      else state.current = next;
+    };
+
     const ro = new ResizeObserver(resize);
     ro.observe(el);
-    if (size.current.w > 0) retarget(state.current, { level, view, metric });
     return () => {
       ro.disconnect();
       cancelAnimationFrame(raf.current);
     };
-  }, [data, level, view, metric]);
+  }, [data]);
+
+  useEffect(() => {
+    highlighted.current = new Set(highlight ?? []);
+    redraw.current();
+  }, [highlight]);
+
+  useEffect(() => {
+    const cur = state.current;
+    if (cur.level === level && cur.view === view && cur.metric === metric)
+      return;
+    retargetTo.current({ level, view, metric });
+  }, [level, view, metric]);
 
   useEffect(() => {
     const el = canvas.current;
@@ -361,9 +444,11 @@ export function Stage({
       redraw.current();
     };
     el.addEventListener("pointermove", hit);
+    el.addEventListener("pointerdown", hit);
     el.addEventListener("pointerleave", leave);
     return () => {
       el.removeEventListener("pointermove", hit);
+      el.removeEventListener("pointerdown", hit);
       el.removeEventListener("pointerleave", leave);
     };
   }, [onHover]);
@@ -377,6 +462,9 @@ export function Stage({
     />
   );
 }
+
+const progress = (it: Item, now: number) =>
+  ease(Math.min(1, Math.max(0, (now - it.start) / it.dur)));
 
 const sureFor = (shape: Shape, metric: Metric) =>
   metric === "ornato" ? 0.25 + 0.75 * certainty(shape) : 1;

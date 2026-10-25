@@ -116,3 +116,26 @@ export function toRgb(color: string): string {
   });
   return m[4] ? `rgba(${r},${g},${bl},${m[4]})` : `rgb(${r},${g},${bl})`;
 }
+
+export type Oklch = [l: number, c: number, h: number, a: number];
+
+export function parseOklch(color: string): Oklch {
+  const m = color.match(
+    /oklch\(([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\)/,
+  );
+  return m
+    ? [Number(m[1]), Number(m[2]), Number(m[3]), m[4] ? Number(m[4]) : 1]
+    : [0.6, 0, 0, 1];
+}
+
+/** Interpolates in OKLCH along the shorter hue arc, so a palette change reads as a blend. */
+export function mixOklch(a: Oklch, b: Oklch, t: number): string {
+  let dh = b[2] - a[2];
+  if (dh > 180) dh -= 360;
+  if (dh < -180) dh += 360;
+  const l = a[0] + (b[0] - a[0]) * t;
+  const c = a[1] + (b[1] - a[1]) * t;
+  const h = (a[2] + dh * t + 360) % 360;
+  const al = a[3] + (b[3] - a[3]) * t;
+  return `oklch(${l.toFixed(3)} ${c.toFixed(3)} ${h.toFixed(1)} / ${al.toFixed(3)})`;
+}

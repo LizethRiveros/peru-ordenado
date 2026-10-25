@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AboutDialog } from "@/components/about-dialog";
 import { SiteHeader } from "@/components/site-header";
 import { Stage, sortShapes, valueLabel } from "@/components/stage";
@@ -12,7 +12,11 @@ import {
   ornatoColor,
 } from "@/lib/color";
 import { count, km2, pct, soles } from "@/lib/format";
-import { parseSelection, type Selection, selectionTitle } from "@/lib/selection";
+import {
+  parseSelection,
+  type Selection,
+  selectionTitle,
+} from "@/lib/selection";
 import {
   certainty,
   type Dataset,
@@ -24,19 +28,9 @@ import {
   SOURCE,
   value,
 } from "@/lib/shapes";
+import { buildStory, type Step } from "@/lib/story";
 
 type Hit = { shape: Shape; level: Level; x: number; y: number };
-
-const TOUR: Partial<Selection>[] = [
-  { level: "dep", view: "mapa" },
-  { level: "dep", view: "ordenado" },
-  { level: "prov", view: "ordenado" },
-  { level: "dist", view: "ordenado" },
-  { level: "prov", view: "ordenado" },
-  { level: "dep", view: "ordenado" },
-  { level: "dep", view: "mapa" },
-];
-const TOUR_STEP = 3200;
 
 export function Explorer() {
   const [data, setData] = useState<Dataset | null>(null);
@@ -46,9 +40,10 @@ export function Explorer() {
     metric: "area",
   });
   const [hit, setHit] = useState<Hit | null>(null);
-  const [touring, setTouring] = useState(false);
   const [video, setVideo] = useState(false);
-  const tour = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const [step, setStep] = useState<number | null>(null);
+  const [paused, setPaused] = useState(false);
+  const [touched, setTouched] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -75,42 +70,34 @@ export function Explorer() {
     window.history.replaceState(null, "", `?${q}`);
   }, [sel, ready]);
 
-  const stopTour = useCallback(() => {
-    for (const t of tour.current) clearTimeout(t);
-    tour.current = [];
-    setTouring(false);
-  }, []);
+  const story = useMemo(() => (data ? buildStory(data) : []), [data]);
 
-  const startTour = useCallback(
-    (loop: boolean) => {
-      stopTour();
-      setTouring(true);
-      const run = () => {
-        TOUR.forEach((step, i) => {
-          tour.current.push(
-            setTimeout(() => setSel((s) => ({ ...s, ...step })), i * TOUR_STEP),
-          );
-        });
-        tour.current.push(
-          setTimeout(
-            () => (loop ? run() : setTouring(false)),
-            TOUR.length * TOUR_STEP,
-          ),
-        );
-      };
-      run();
+  const goTo = useCallback(
+    (i: number | null) => {
+      setStep(i);
+      setPaused(false);
+      setTouched(true);
+      if (i !== null && story[i]) setSel(story[i].sel);
     },
-    [stopTour],
+    [story],
   );
 
+  // Video mode loops the story with its captions, ready to screen-record.
   useEffect(() => {
-    if (video && data) startTour(true);
-    return stopTour;
-  }, [video, data, startTour, stopTour]);
+    if (video && story.length) goTo(0);
+  }, [video, story, goTo]);
 
-  const choose = (next: Partial<Selection>) => {
-    stopTour();
-    setSel((s) => ({ ...s, ...next }));
+  const next = () => {
+    if (step === null) return;
+    if (step + 1 < story.length) goTo(step + 1);
+    else if (video) goTo(0);
+    else setPaused(true);
+  };
+
+  const choose = (n: Partial<Selection>) => {
+    setStep(null);
+    setTouched(true);
+    setSel((s) => ({ ...s, ...n }));
   };
 
   const shapes = data?.[sel.level] ?? [];
@@ -137,7 +124,7 @@ export function Explorer() {
       className={
         video
           ? "relative mx-auto aspect-[4/5] h-[min(100dvh,125vw)] overflow-hidden bg-background"
-          : "glass glass-border relative order-1 min-h-[125vw] overflow-hidden rounded-3xl sm:min-h-[80vh] lg:order-none lg:min-h-0"
+          : `glass glass-border relative order-1 overflow-hidden rounded-3xl transition-[min-height] duration-700 sm:min-h-[80vh] lg:order-none lg:min-h-0 ${step !== null ? "min-h-[175vw]" : "min-h-[125vw]"}`
       }
     >
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex flex-col items-center gap-1 px-4 pt-4 text-center sm:pt-5">
@@ -151,7 +138,15 @@ export function Explorer() {
           {title}
         </p>
       </div>
-      <div className="absolute inset-x-0 top-20 bottom-10 sm:top-16">
+      <div
+        className={`absolute inset-x-0 top-20 transition-[bottom] duration-700 ease-smooth sm:top-16 ${
+          step !== null
+            ? "bottom-60 sm:bottom-44"
+            : !touched
+              ? "bottom-28"
+              : "bottom-10"
+        }`}
+      >
         {data ? (
           <Stage
             data={data}
@@ -159,6 +154,7 @@ export function Explorer() {
             view={sel.view}
             metric={sel.metric}
             label={`Mapa del Perú: ${title}`}
+            highlight={step !== null ? story[step]?.highlight : undefined}
             onHover={setHit}
           />
         ) : (
@@ -168,9 +164,47 @@ export function Explorer() {
         )}
         {hit && <Tooltip hit={hit} metric={sel.metric} names={names} />}
       </div>
-      <div className="absolute inset-x-0 bottom-3 z-10 flex justify-center">
-        <Scrubber level={sel.level} onChange={(level) => choose({ level })} />
-      </div>
+      {step === null && (
+        <div className="absolute inset-x-0 bottom-3 z-10 flex justify-center">
+          <Scrubber level={sel.level} onChange={(level) => choose({ level })} />
+        </div>
+      )}
+      {step !== null && story[step] && (
+        <StoryCard
+          key={step}
+          index={step}
+          steps={story}
+          paused={paused}
+          video={video}
+          onPause={() => setPaused((p) => !p)}
+          onGo={goTo}
+          onDone={next}
+        />
+      )}
+      {step === null && !touched && data && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-14 z-10 flex justify-center px-4">
+          <button
+            type="button"
+            onClick={() => goTo(0)}
+            className="glass glass-border animate-in pointer-events-auto flex items-center gap-3 rounded-full py-2 pr-5 pl-2 text-left transition hover:scale-[1.02]"
+          >
+            <span className="grid size-9 place-items-center rounded-full bg-foreground text-background">
+              <PlayIcon />
+            </span>
+            <span className="flex flex-col">
+              <span className="text-[14px] font-medium">Ver la historia</span>
+              <span className="text-[11.5px] text-muted-foreground">
+                {story.length} pasos, un minuto. O explora por tu cuenta.
+              </span>
+            </span>
+          </button>
+        </div>
+      )}
+      {step === null && touched && !hit && (
+        <p className="pointer-events-none absolute bottom-4 left-5 z-10 hidden text-[11px] text-muted-foreground sm:block">
+          Pasa el cursor sobre una forma para ver sus datos
+        </p>
+      )}
     </section>
   );
 
@@ -241,10 +275,16 @@ export function Explorer() {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => (touring ? stopTour() : startTour(false))}
+                onClick={() => (step === null ? goTo(0) : goTo(null))}
                 className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-foreground px-3 py-2.5 text-[13px] font-medium text-background transition hover:opacity-90"
               >
-                {touring ? "Detener recorrido" : "Reproducir recorrido"}
+                {step === null ? (
+                  <>
+                    <PlayIcon /> Ver la historia
+                  </>
+                ) : (
+                  "Salir de la historia"
+                )}
               </button>
               <ShareButton title={title} />
             </div>
@@ -265,8 +305,7 @@ export function Explorer() {
               {sel.metric !== "area" && (
                 <p className="col-span-2 text-[11px] leading-relaxed text-muted-foreground">
                   {count(withData)} de {count(shapes.length)}{" "}
-                  {LEVELS[sel.level].plural} con presupuesto de inversión
-                  registrado en el MEF.
+                  {LEVELS[sel.level].plural} con datos para este criterio.
                 </p>
               )}
             </div>
@@ -275,6 +314,170 @@ export function Explorer() {
         {stage}
       </main>
     </div>
+  );
+}
+
+function PlayIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+    >
+      <path d="M7 4.5v15a1 1 0 0 0 1.5.86l12-7.5a1 1 0 0 0 0-1.72l-12-7.5A1 1 0 0 0 7 4.5Z" />
+    </svg>
+  );
+}
+
+/** One story step: caption, segmented progress that advances on its own, and transport controls. */
+function StoryCard({
+  index,
+  steps,
+  paused,
+  video,
+  onPause,
+  onGo,
+  onDone,
+}: {
+  index: number;
+  steps: Step[];
+  paused: boolean;
+  video: boolean;
+  onPause: () => void;
+  onGo: (i: number | null) => void;
+  onDone: () => void;
+}) {
+  const s = steps[index];
+  // Motion takes ~2 s; then enough time to read the caption.
+  const ms = 2600 + (s.title.length + s.body.length) * 32;
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") onGo(Math.min(index + 1, steps.length - 1));
+      if (e.key === "ArrowLeft") onGo(Math.max(index - 1, 0));
+      if (e.key === " ") {
+        e.preventDefault();
+        onPause();
+      }
+      if (e.key === "Escape") onGo(null);
+    };
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [index, steps.length, onGo, onPause]);
+  return (
+    <div className="absolute inset-x-3 bottom-3 z-20 sm:inset-x-5 sm:bottom-5">
+      <div className="glass glass-solid glass-border animate-in rounded-3xl p-4 sm:p-5">
+        <div className="flex gap-1" aria-hidden="true">
+          {steps.map((x, i) => (
+            <span
+              key={x.title}
+              className="h-[3px] flex-1 overflow-hidden rounded-full bg-foreground/12"
+            >
+              {i < index && (
+                <span className="block h-full w-full bg-foreground" />
+              )}
+              {i === index && (
+                <span
+                  className="story-fill block h-full bg-foreground"
+                  style={{
+                    ["--story-ms" as string]: `${ms}ms`,
+                    animationDuration: `${ms}ms`,
+                    animationPlayState: paused ? "paused" : "running",
+                  }}
+                  onAnimationEnd={onDone}
+                />
+              )}
+            </span>
+          ))}
+        </div>
+        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-6">
+          <div className="min-w-0 flex-1">
+            <p className="text-[11px] font-medium tracking-[0.08em] text-accent uppercase">
+              {index + 1}/{steps.length} · {s.kicker}
+            </p>
+            <h2 className="mt-1 font-display text-[22px] leading-tight sm:text-2xl">
+              {s.title}
+            </h2>
+            <p className="mt-1.5 max-w-2xl text-[13.5px] leading-relaxed text-foreground/80">
+              {s.body}
+            </p>
+          </div>
+          {!video && (
+            <div className="flex shrink-0 items-center gap-1.5">
+              <TransportButton
+                label="Paso anterior"
+                disabled={index === 0}
+                onClick={() => onGo(index - 1)}
+              >
+                <path d="M15 6 9 12l6 6" />
+              </TransportButton>
+              <TransportButton
+                label={paused ? "Continuar" : "Pausar"}
+                onClick={onPause}
+              >
+                {paused ? (
+                  <path d="M8 5v14l11-7Z" />
+                ) : (
+                  <path d="M9 5v14M15 5v14" />
+                )}
+              </TransportButton>
+              <TransportButton
+                label="Paso siguiente"
+                disabled={index === steps.length - 1}
+                onClick={() => onGo(index + 1)}
+              >
+                <path d="m9 6 6 6-6 6" />
+              </TransportButton>
+              <button
+                type="button"
+                onClick={() => onGo(null)}
+                className="ml-auto rounded-lg px-2.5 sm:ml-2 py-1.5 text-[12.5px] text-muted-foreground transition hover:bg-foreground/5 hover:text-foreground"
+              >
+                {index === steps.length - 1 ? "Explorar" : "Saltar"}
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TransportButton({
+  label,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  disabled?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={onClick}
+      className="grid size-8 place-items-center rounded-lg border border-border text-foreground/85 transition hover:border-foreground/20 disabled:opacity-35"
+    >
+      <svg
+        width="15"
+        height="15"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        {children}
+      </svg>
+    </button>
   );
 }
 
