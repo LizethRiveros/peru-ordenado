@@ -17,12 +17,14 @@ import { Stage, sortShapes, valueLabel } from "@/components/stage";
 import {
   budgetColor,
   colorFor,
+  rangeFor,
   countColor,
   coverageColor,
   digitalColor,
   executionColor,
   NO_DATA,
   ornatoColor,
+  quipuColor,
 } from "@/lib/color";
 import { count, km2, pct, soles } from "@/lib/format";
 import {
@@ -272,10 +274,10 @@ export function Explorer() {
         <div className="pointer-events-none absolute inset-x-0 bottom-14 z-10 flex justify-center px-4">
           <div className="glass glass-border animate-in pointer-events-auto flex max-w-[26rem] flex-col gap-3 rounded-3xl p-4">
             <p className="text-[13.5px] leading-snug text-foreground">
-              <strong className="font-medium">Esto es el Perú desarmado.</strong>{" "}
-              Cada forma es un distrito, una provincia o un departamento, a su
-              tamaño real. Busca el tuyo y mira cuánto ha gastado de su plata
-              para obras, si le llega el 4G y cuántas emergencias tuvo.
+              <strong className="font-medium">Este es el Perú desarmado.</strong>{" "}
+              Cada pieza es un distrito, una provincia o un departamento, al
+              tamaño que tiene de verdad. Busca el tuyo y fíjate cuánto gastó
+              en obras, si le llega el 4G y cuántas emergencias tuvo.
             </p>
             <div className="flex gap-2">
               <button
@@ -316,21 +318,20 @@ export function Explorer() {
       <SiteHeader about={<AboutDialog sources={data?.sources} />} />
       <main className="grid flex-1 gap-4 lg:min-h-0 lg:flex-none px-3 pb-3 sm:px-5 lg:h-[calc(100dvh-3.75rem)] lg:grid-cols-[minmax(20rem,23rem)_1fr] lg:grid-rows-[minmax(0,1fr)]">
         <aside className="contents lg:flex lg:min-h-0 lg:flex-col lg:gap-5 lg:overflow-y-auto lg:pt-8 lg:pr-1">
-          <div className="animate-in order-first pt-3 lg:pt-0">
+          <div className="animate-in relative z-40 order-first pt-3 lg:pt-0">
             <h1 className="font-display text-5xl leading-[0.95] tracking-[-0.02em] sm:text-6xl">
               Qui<em className="font-light">pu</em>
             </h1>
             <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
-              El Perú desarmado y vuelto a ordenar, con la información que importa. Cada forma es un
-              territorio real, a escala; cambia el criterio y mira quién queda
-              arriba.
+              Así se ve el Perú si lo desarmas: cada pieza es un departamento,
+              una provincia o un distrito, con el tamaño que tiene de verdad.
+              Cambia la pregunta y mira quién queda arriba.
             </p>
             {headline && (
               <p className="mt-4 max-w-sm font-display text-[21px] leading-snug">
-                Este año, los municipios de {depName ?? "todo el Perú"} han
-                gastado{" "}
-                <span className="text-accent">{headline.here}</span> soles para
-                obras.
+                Los municipios de {depName ?? "todo el Perú"} ya gastaron{" "}
+                <span className="text-accent">{headline.here}</span> soles de los
+                que tienen para obras este año.
                 {depName && headline.all ? (
                   <span className="block text-[13px] text-muted-foreground">
                     El país en conjunto: {headline.all}.
@@ -348,6 +349,10 @@ export function Explorer() {
               metric={sel.metric}
               names={names}
               country={data ? countryText(data, sel.metric) : undefined}
+              range={rangeFor(
+                data?.[pickShape.id.length === 2 ? "dep" : pickShape.id.length === 4 ? "prov" : "dist"] ?? [],
+                sel.metric,
+              )}
               onClose={() => setPick(null)}
             />
           )}
@@ -480,12 +485,14 @@ function PlaceCard({
   metric,
   names,
   country,
+  range,
   onClose,
 }: {
   shape: Shape;
   metric: Metric;
   names: Map<string, string>;
   country?: string;
+  range: [number, number];
   onClose: () => void;
 }) {
   const fig = figure(shape, metric);
@@ -547,7 +554,7 @@ function PlaceCard({
           unit: fig.unit,
           line,
           question: METRICS[m].label,
-          fill: colorFor(shape, m, false, [1, 1e9]),
+          fill: colorFor(shape, m, false, range),
         }}
         text={text}
         url={url}
@@ -839,11 +846,14 @@ function Legend({ metric, shapes }: { metric: Metric; shapes: Shape[] }) {
       lo: "0%",
       hi: "100%",
     },
-    quipu: {
-      colors: stops.map((t) => executionColor(t)),
-      lo: "0%",
-      hi: "100%",
-    },
+    quipu: (() => {
+      const r = rangeFor(shapes, "quipu");
+      return {
+        colors: stops.map((t) => quipuColor(r[0] + (r[1] - r[0]) * t, r)),
+        lo: `${Math.round(r[0] * 100)} % o menos`,
+        hi: `${Math.round(r[1] * 100)} % o más`,
+      };
+    })(),
     inversion: {
       colors: stops.map((t) => budgetColor(min * (max / min) ** t, min, max)),
       lo: soles(min),

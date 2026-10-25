@@ -78,6 +78,30 @@ export function digitalColor(v: number): string {
   return `oklch(${(0.82 - t * 0.3).toFixed(3)} ${(0.02 + t * 0.17).toFixed(3)} 255)`;
 }
 
+/**
+ * Avance of the year on a pale → deep terracotta ramp, stretched between the 5th and 95th percentile
+ * of the shapes on screen: municipal spending clusters in a narrow band, so a fixed 0–100 scale
+ * paints the whole country one color.
+ */
+export function quipuColor(r: number, [lo, hi]: [number, number]): string {
+  const t = Math.max(0, Math.min(1, hi > lo ? (r - lo) / (hi - lo) : 0.5));
+  return `oklch(${(0.93 - 0.5 * t).toFixed(3)} ${(0.03 + 0.12 * t).toFixed(3)} ${(75 - 40 * t).toFixed(1)})`;
+}
+
+/** Color range for a metric over a set of shapes: percentiles of the ratio for quipu, PIM min/max otherwise. */
+export function rangeFor(shapes: Shape[], metric: Metric): [number, number] {
+  if (metric === "quipu") {
+    const v = shapes
+      .flatMap((s) => (s.avance?.pim ? [s.avance.dev / s.avance.pim] : []))
+      .sort((a, b) => a - b);
+    if (v.length === 0) return [0, 1];
+    const at = (p: number) => v[Math.min(v.length - 1, Math.floor(p * v.length))];
+    return [at(0.05), at(0.95)];
+  }
+  const v = shapes.flatMap((s) => (s.inv ? [s.inv.pim] : []));
+  return [Math.max(1, Math.min(...v)), Math.max(2, ...v)];
+}
+
 export function colorFor(
   shape: Shape,
   metric: Metric,
@@ -89,7 +113,7 @@ export function colorFor(
     return shape.digital === undefined ? NO_DATA : digitalColor(shape.digital);
   if (metric === "quipu")
     return shape.avance?.pim
-      ? executionColor(shape.avance.dev / shape.avance.pim)
+      ? quipuColor(shape.avance.dev / shape.avance.pim, range)
       : NO_DATA;
   if (metric === "cobertura" || metric === "emergencias" || metric === "zonas") {
     const v = value(shape, metric);

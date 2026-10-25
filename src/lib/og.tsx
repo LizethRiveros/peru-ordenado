@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { ImageResponse } from "next/og";
-import { colorFor, toRgb } from "@/lib/color";
+import { colorFor, rangeFor, toRgb } from "@/lib/color";
 import { gridLayout, mapLayout } from "@/lib/layout";
 import { type Selection, selectionTitle } from "@/lib/selection";
 import { figure } from "@/lib/figure";
@@ -42,11 +42,7 @@ export async function ogImage(sel: Selection) {
           ),
           box,
         );
-  const pims = shapes.flatMap((s) => (s.inv ? [s.inv.pim] : []));
-  const range: [number, number] = [
-    Math.max(1, Math.min(...pims)),
-    Math.max(2, ...pims),
-  ];
+  const range = rangeFor(shapes, sel.metric);
 
   return new ImageResponse(
     <div
@@ -174,7 +170,8 @@ export async function ogPlace(id: string, metric: Metric) {
   const fig = figure(shape, m);
   const [x0, y0, x1, y1] = shape.bbox;
   const k = Math.min(500 / (x1 - x0), 500 / (y1 - y0));
-  const fill = toRgb(colorFor(shape, m, false, [1, 1e9]));
+  const level = shape.id.length === 2 ? "dep" : shape.id.length === 4 ? "prov" : "dist";
+  const fill = toRgb(colorFor(shape, m, false, rangeFor(data[level], m)));
   return new ImageResponse(
     <div
       style={{

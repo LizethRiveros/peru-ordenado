@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { colorFor, mixOklch, type Oklch, parseOklch } from "@/lib/color";
+import { colorFor, mixOklch, type Oklch, parseOklch, rangeFor } from "@/lib/color";
 import { km2, pct, soles } from "@/lib/format";
 import {
   type Box,
@@ -110,16 +110,11 @@ export function Stage({
     if (!el) return;
     const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const range = (shapes: Shape[]): [number, number] => {
-      const v = shapes.flatMap((s) => (s.inv ? [s.inv.pim] : []));
-      return [Math.max(1, Math.min(...v)), Math.max(2, ...v)];
-    };
-
     const targets = (lvl: Level, vw: View, m: Metric) => {
       const shapes = data[lvl];
       return vw === "mapa"
         ? mapLayout(shapes, size.current)
-        : gridLayout(sortShapes(shapes, m), size.current, allNames);
+        : gridLayout(sortShapes(shapes, m), size.current, allNames || lvl === "dep");
     };
 
     const retarget = (
@@ -132,7 +127,7 @@ export function Stage({
         sortShapes(data[next.level], next.metric).map((s, i) => [s.id, i]),
       );
       const n = data[next.level].length;
-      const rng = range(data[next.level]);
+      const rng = rangeFor(data[next.level], next.metric);
       const delay = (id: string) =>
         reduced ? 0 : ((order.get(id) ?? 0) / n) * STAGGER;
 

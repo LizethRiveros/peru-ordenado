@@ -59,7 +59,7 @@ export function PlaceFinder({
         className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-[14px] text-foreground placeholder:text-muted-foreground focus:border-accent/60 focus:outline-none"
       />
       {found.length > 0 && (
-        <ul className="glass glass-solid glass-border absolute inset-x-0 top-full z-30 mt-1.5 overflow-hidden rounded-2xl">
+        <ul className="absolute inset-x-0 top-full z-50 mt-1.5 overflow-hidden rounded-2xl border border-border bg-surface shadow-[0_20px_50px_-20px_rgba(60,40,20,0.45)]">
           {found.map(({ s }) => (
             <li key={s.id}>
               <button
