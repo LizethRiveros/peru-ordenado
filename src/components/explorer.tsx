@@ -46,7 +46,7 @@ import {
   SOURCE,
   value,
 } from "@/lib/shapes";
-import { fichaRows } from "@/lib/ficha";
+import { conclusion, fichaRows } from "@/lib/ficha";
 import { figure } from "@/lib/figure";
 import { buildStory, type Step } from "@/lib/story";
 
@@ -184,6 +184,12 @@ export function Explorer() {
     if (!data || !pick) return undefined;
     return [...data.dist, ...data.prov, ...data.dep].find((s) => s.id === pick);
   }, [data, pick]);
+  // On a phone the card is a sheet over the lower half: bring the map to the top so the place stays in view.
+  const pickId = pickShape?.id;
+  useEffect(() => {
+    if (!phone || !pickId) return;
+    document.querySelector("main section")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [phone, pickId]);
   const vsShape = useMemo(() => {
     if (!data || !vs) return undefined;
     return [...data.dist, ...data.prov, ...data.dep].find((s) => s.id === vs);
@@ -259,7 +265,7 @@ export function Explorer() {
             label={`Mapa del Perú: ${title}`}
             highlight={highlight}
             zoom={step === null && !!pickShape && !vsShape}
-            lift={phone && pickShape ? 0.3 : 0}
+            lift={phone && pickShape ? 0.04 : 0}
             onHover={setHit}
           />
         ) : (
@@ -344,14 +350,14 @@ export function Explorer() {
   return (
     <div className="flex min-h-dvh flex-col">
       <SiteHeader about={<AboutDialog sources={data?.sources} />} />
-      <main className="grid flex-1 gap-4 lg:min-h-0 lg:flex-none px-3 pb-3 sm:px-5 lg:h-[calc(100dvh-3.75rem)] lg:grid-cols-[minmax(20rem,23rem)_1fr] lg:grid-rows-[minmax(0,1fr)]">
+      <main className="grid flex-1 grid-cols-[minmax(0,1fr)] gap-4 lg:min-h-0 lg:flex-none px-3 pb-3 sm:px-5 lg:h-[calc(100dvh-3.75rem)] lg:grid-cols-[minmax(20rem,23rem)_1fr] lg:grid-rows-[minmax(0,1fr)]">
         <aside className="contents lg:flex lg:min-h-0 lg:flex-col lg:gap-5 lg:overflow-y-auto lg:pt-8 lg:pr-1">
           <div className="relative z-40 order-first pt-3 lg:pt-0">
             <h1 className="font-display text-5xl leading-[0.95] tracking-[-0.02em] sm:text-6xl">
               Qui<em className="font-light">pu</em>
             </h1>
             {!pickShape && (
-              <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
+              <p className="mt-3 hidden max-w-sm text-[14px] leading-relaxed text-muted-foreground sm:block">
                 ¿De qué distrito eres? Mira cuánto gastó en obras, su cobertura
                 4G y sus emergencias.
               </p>
@@ -379,7 +385,7 @@ export function Explorer() {
             <div className="mt-4 max-w-sm">
               <PlaceFinder data={data} names={names} onPick={goToPlace} />
             </div>
-            <div className="mt-4 flex max-w-sm flex-wrap gap-1.5">
+            <div className="-mx-3 mt-3 flex gap-1.5 overflow-x-auto px-3 pb-1 sm:mx-0 sm:mt-4 sm:max-w-sm sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 [&>*]:shrink-0">
               {CHIPS.map(([m, label]) => (
                 <Chip
                   key={m}
@@ -585,6 +591,10 @@ function PlaceCard({
     [other, otherPeers],
   );
   const fig = figure(shape, metric);
+  const said = useMemo(
+    () => conclusion(shape, peers, LEVELS[levelOf(shape.id)].plural),
+    [shape, peers],
+  );
   const has = value(shape, metric) !== undefined || metric === "area";
   const m = has ? metric : "area";
   // "provincia de Huancavelica, Huancavelica" never reads as a repeated name.
@@ -657,6 +667,12 @@ function PlaceCard({
           ×
         </button>
       </div>
+      {said && (
+        <p className="font-display text-[17px] leading-snug">
+          <span className="text-muted-foreground">Su quipu cuenta: </span>
+          {said}.
+        </p>
+      )}
       <FichaQuipu rows={rows} />
       <p className="-mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
         {rankText ? `${rankText}. ` : ""}Cada hilo es más largo cuanto más
@@ -1208,7 +1224,7 @@ function sentence(shape: Shape, metric: Metric): string | undefined {
   const v = value(shape, metric);
   if (metric === "area") return `Mide ${km2(shape.area)}.`;
   if (metric === "poblacion" && v !== undefined)
-    return `Viven ${count(v)} personas, según la proyección del INEI para 2025. Es una estimación, no el conteo del censo.`;
+    return `Viven ${count(v)} personas, según la proyección que el INEI hizo antes del Censo 2025. Es una estimación y puede diferir del conteo del censo.`;
   if (metric === "densidad" && v !== undefined)
     return `Hay ${densidad(v)}: ${count(shape.pob ?? 0)} personas en ${km2(shape.area)}.`;
   if (v === undefined) return undefined;

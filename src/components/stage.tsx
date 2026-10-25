@@ -485,6 +485,13 @@ export function Stage({
       if (performance.now() >= settledAt.current) draw(performance.now());
     };
 
+    // Zoom so the place fills about 40% of the canvas: a tiny district needs a lot more than a big one.
+    const fitK = (it: Item) => {
+      const [x0, y0, x1, y1] = it.shape.bbox;
+      const extent = Math.max(x1 - x0, y1 - y0) * it.to.s;
+      const room = 0.4 * Math.min(size.current.w, size.current.h);
+      return extent > 0 ? Math.max(1.5, Math.min(30, room / extent)) : 3.4;
+    };
     aim.current = () => {
       const now = performance.now();
       const { from, to, start } = cam.current;
@@ -500,7 +507,7 @@ export function Stage({
       );
       const flyIn = zoomOn.current && highlighted.current.size === 1 && target;
       const next = flyIn
-        ? { k: lvl === "dist" ? 3.4 : lvl === "prov" ? 2.4 : 1.5, fx: target.to.x, fy: target.to.y }
+        ? { k: fitK(target), fx: target.to.x, fy: target.to.y }
         : { k: 1, fx: size.current.w / 2, fy: size.current.h / 2 };
       if (here.k === 1 && next.k === 1) return;
       cam.current = { from: here, to: next, start: now };

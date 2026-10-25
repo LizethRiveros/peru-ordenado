@@ -37,3 +37,41 @@ export function fichaRows(shape: Shape, peers: Shape[]): FichaRow[] {
     };
   });
 }
+
+/** How each criterion reads in a sentence: [when it ranks high, when it ranks low]. */
+const SAYS: Partial<Record<Metric, [string, string]>> = {
+  quipu: ["ha gastado más de su presupuesto para obras", "ha gastado menos de su presupuesto para obras"],
+  cobertura: ["tiene más pueblos con señal 4G", "tiene menos pueblos con señal 4G"],
+  emergencias: ["ha vivido más emergencias", "ha vivido menos emergencias"],
+  zonas: ["tiene más zonas de derrumbes y huaicos", "tiene menos zonas de derrumbes y huaicos"],
+  digital: ["tiene más presencia digital", "tiene menos presencia digital"],
+  poblacion: ["tiene más habitantes", "tiene menos habitantes"],
+  densidad: ["está más poblado por kilómetro cuadrado", "está menos poblado por kilómetro cuadrado"],
+};
+
+/**
+ * The one thing that sets a place apart, in a sentence: the criterion where it sits furthest from the
+ * middle of its peers, with the share of them it beats or trails. Null when there is nothing to compare.
+ */
+export function conclusion(shape: Shape, peers: Shape[], plural: string): string | null {
+  let best: { metric: Metric; share: number; high: boolean } | null = null;
+  for (const metric of Object.keys(SAYS) as Metric[]) {
+    const v = value(shape, metric);
+    if (v === undefined) continue;
+    const all = peers.flatMap((p) => {
+      const x = value(p, metric);
+      return x === undefined ? [] : [x];
+    });
+    if (all.length < 20) continue;
+    // Strictly below and strictly above: places that tie with this one are not "beaten" by it.
+    const below = all.filter((x) => x < v).length / (all.length - 1);
+    const above = all.filter((x) => x > v).length / (all.length - 1);
+    const high = below >= above;
+    const share = high ? below : above;
+    if (!best || share > best.share) best = { metric, share, high };
+  }
+  const says = best && SAYS[best.metric];
+  if (!best || !says || best.share < 0.5) return null;
+  const n = Math.min(99, Math.max(1, Math.round(best.share * 100)));
+  return `${best.high ? says[0] : says[1]} que ${n} de cada 100 ${plural} del país`;
+}

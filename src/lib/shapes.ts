@@ -124,7 +124,7 @@ const GUIDE: Record<Metric, string> = {
   area:
     "Cada forma es un {lugar} del Perú dibujado a su tamaño real. Van de más grande a más chico. Los colores solo sirven para distinguir una región de otra.",
   poblacion:
-    "Cada forma es un {lugar}. Cuántas personas viven ahí según la proyección del INEI para 2025 (cifra referencial, no el conteo del censo). Más oscuro: más gente.",
+    "Cada forma es un {lugar}. Cuántas personas viven ahí según la proyección del INEI para 2025, hecha antes del Censo 2025 (puede diferir del conteo). Más oscuro: más gente.",
   densidad:
     "Cada forma es un {lugar}. Cuántas personas viven por cada kilómetro cuadrado (proyección INEI 2025 entre el área). Más oscuro: más apretado. Un distrito enorme y casi vacío sale claro aunque tenga mucha gente.",
   inversion:

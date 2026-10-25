@@ -13,7 +13,7 @@ body{font-family:Inter,sans-serif;color:var(--fg);-webkit-font-smoothing:antiali
 #view{left:100px;top:190px;width:880px;height:780px;overflow:hidden;-webkit-mask-image:linear-gradient(to right,transparent,#000 3%,#000 97%,transparent),linear-gradient(to bottom,transparent,#000 3%,#000 97%,transparent);-webkit-mask-composite:source-in;mask-image:linear-gradient(to right,transparent,#000 3%,#000 97%,transparent),linear-gradient(to bottom,transparent,#000 3%,#000 97%,transparent);mask-composite:intersect}
 #view svg{position:absolute;left:0;top:0}
 #name{left:72px;top:1000px;font:300 128px/1 Fraunces;letter-spacing:-.025em;white-space:nowrap}
-#where{left:76px;top:1142px;font:400 26px 'JetBrains Mono';color:var(--muted);letter-spacing:.03em}
+#where{left:76px;top:1142px;line-height:1.45;font:400 26px/1.45 'JetBrains Mono';color:var(--muted);letter-spacing:.03em}
 #q{left:0;top:0;width:1080px;height:1920px}
 .num{position:absolute;font:300 84px/1 Fraunces;letter-spacing:-.02em;color:var(--accent);font-variant-numeric:lining-nums tabular-nums;width:200px;text-align:center}
 .lab{position:absolute;font:500 22px 'JetBrains Mono';letter-spacing:.06em;text-transform:uppercase;color:var(--muted);width:200px;text-align:center}
@@ -217,7 +217,7 @@ function seek(t) {
   const nameOn = ease(seg(t, 8.6, 9.4));
   $("name").style.opacity = nameOn; $("name").textContent = D.district.name;
   $("name").style.transform = `translateY(${(1 - nameOn) * 24}px)`;
-  $("where").style.opacity = ease(seg(t, 9.0, 9.7)); $("where").textContent = D.district.where;
+  $("where").style.opacity = ease(seg(t, 9.0, 9.7)); $("where").innerHTML = D.district.where + (D.district.pob ? "<br>" + D.district.pob.toLocaleString("es-PE") + " habitantes · " + Math.round(D.district.dens).toLocaleString("es-PE") + " por km²" : "");
 
   // cord and threads
   const cordOn = ease(seg(t, 9.9, 10.7));

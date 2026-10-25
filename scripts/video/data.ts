@@ -7,7 +7,7 @@
 import { mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { colorFor, rangeFor, toRgb } from "../../src/lib/color";
-import { fichaRows } from "../../src/lib/ficha";
+import { conclusion, fichaRows } from "../../src/lib/ficha";
 import { mapLayout } from "../../src/lib/layout";
 import type { Dataset, Metric, Shape } from "../../src/lib/shapes";
 
@@ -53,7 +53,10 @@ const out = {
   district: {
     id: dist.id,
     name: dist.name,
-    where: `${names.get(dist.id.slice(0, 4)) ?? ""}, ${dep.name}`,
+    where: `provincia de ${names.get(dist.id.slice(0, 4)) ?? ""}, ${dep.name}`,
+    pob: dist.pob ?? null,
+    dens: dist.pob ? dist.pob / dist.area : null,
+    said: conclusion(dist, data.dist, "distritos"),
     d: dist.d,
     bbox: dist.bbox,
     col: rgb(dist, "quipu", data.dist),

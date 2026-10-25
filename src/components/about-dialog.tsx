@@ -151,7 +151,7 @@ export function AboutDialog({
               geológicos del INGEMMET, solo en unos 1,000 distritos; el resto es
               sin datos, no cero. <strong>Población y densidad:</strong>{" "}
               población total proyectada por el INEI al 30 de junio de 2025
-              (cifra referencial, no el conteo del censo); la densidad es esa
+              (cifra referencial, hecha antes del Censo 2025: puede diferir del conteo); la densidad es esa
               población entre el área del distrito. <strong>Gentilicios:</strong> los de los 25
               departamentos escritos a mano; el resto, tal como dice la ficha
               de Wikipedia de cada lugar, sin verificar uno por uno. Los
