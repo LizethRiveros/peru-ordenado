@@ -338,11 +338,13 @@ export function Explorer() {
             <h1 className="font-display text-5xl leading-[0.95] tracking-[-0.02em] sm:text-6xl">
               Qui<em className="font-light">pu</em>
             </h1>
-            <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
-              ¿De qué distrito eres? Mira cuánto gastó en obras, su cobertura
-              4G y sus emergencias.
-            </p>
-            {headline && (
+            {!pickShape && (
+              <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
+                ¿De qué distrito eres? Mira cuánto gastó en obras, su cobertura
+                4G y sus emergencias.
+              </p>
+            )}
+            {headline && !pickShape && (
               <div className="mt-5 max-w-sm">
                 <p className="flex items-baseline gap-2.5">
                   <span className="font-display text-[64px] leading-none tracking-[-0.03em] text-accent">
@@ -390,15 +392,18 @@ export function Explorer() {
           )}
 
           <div className="glass glass-border order-2 flex flex-col gap-4 rounded-3xl p-4 lg:order-none">
-            <Field label="Vista">
-              <Segmented
-                value={sel.view}
-                options={[
-                  ["mapa", "Mapa"],
-                  ["ordenado", "Ordenado"],
-                ]}
-                onChange={(view) => choose({ view })}
-              />
+            <Field label="¿Qué quieres ver?">
+              <div className="flex flex-wrap gap-1.5">
+                {CHIPS.map(([m, label]) => (
+                  <Chip
+                    key={m}
+                    on={sel.metric === m}
+                    onClick={() => choose({ metric: m, view: "ordenado" })}
+                  >
+                    {label}
+                  </Chip>
+                ))}
+              </div>
             </Field>
             <Field label="Nivel">
               <Segmented
@@ -411,61 +416,11 @@ export function Explorer() {
                 onChange={(level) => choose({ level })}
               />
             </Field>
-            <Field label="Departamento">
-              <select
-                value={sel.dep ?? ""}
-                onChange={(e) => choose({ dep: e.target.value || undefined })}
-                className="rounded-xl border border-border bg-foreground/[0.03] px-3 py-2 text-[13px] text-foreground"
-              >
-                <option value="">Todo el Perú</option>
-                {[...(data?.dep ?? [])]
-                  .sort((a, b) => a.name.localeCompare(b.name, "es"))
-                  .map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
-              </select>
-            </Field>
-            <Field label="Nombres">
-              <Segmented
-                value={namesAll ? "todos" : "algunos"}
-                options={[
-                  ["algunos", "Los grandes"],
-                  ["todos", "Todos"],
-                ]}
-                onChange={(v) => {
-                  if (v === "todos" && !canNameAll) {
-                    choose({ view: "ordenado", level: sel.level === "dist" && !sel.dep ? "prov" : sel.level });
-                  }
-                  setAllNames(v === "todos");
-                }}
-              />
-            </Field>
-            <Field label="Ordenar y colorear por">
-              <div className="flex flex-col gap-1.5">
-                {(Object.keys(METRICS) as Metric[]).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => choose({ metric: m, view: "ordenado" })}
-                    aria-pressed={sel.metric === m}
-                    className="flex items-center justify-between rounded-xl border border-border px-3 py-2 text-left text-[13px] transition hover:border-foreground/20 aria-pressed:border-accent/50 aria-pressed:bg-accent/10"
-                  >
-                    <span>{METRICS[m].label}</span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {SOURCE[m]}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </Field>
             <Legend metric={sel.metric} shapes={shapes} />
-            <Field label="Cómo leerlo">
-              <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-                {guide(sel.metric, sel.level)}
-              </p>
-            </Field>
+            <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+              {guide(sel.metric, sel.level)}{" "}
+              <span className="text-[11px]">Fuente: {SOURCE[sel.metric]}.</span>
+            </p>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -474,14 +429,84 @@ export function Explorer() {
               >
                 {step === null ? (
                   <>
-                    <PlayIcon /> Ver la historia
+                    <PlayIcon /> Recorrido de 1 min
                   </>
                 ) : (
-                  "Salir de la historia"
+                  "Salir del recorrido"
                 )}
               </button>
               <ShareButton title={title} />
             </div>
+            <details className="group border-t border-border pt-3">
+              <summary className="flex cursor-pointer list-none items-center justify-between text-[12px] text-muted-foreground transition hover:text-foreground">
+                Más opciones
+                <span className="transition group-open:rotate-45">+</span>
+              </summary>
+              <div className="mt-3 flex flex-col gap-4">
+                <Field label="Vista">
+                  <Segmented
+                    value={sel.view}
+                    options={[
+                      ["mapa", "Mapa"],
+                      ["ordenado", "Ordenado"],
+                    ]}
+                    onChange={(view) => choose({ view })}
+                  />
+                </Field>
+                <Field label="Departamento">
+                  <select
+                    value={sel.dep ?? ""}
+                    onChange={(e) =>
+                      choose({ dep: e.target.value || undefined })
+                    }
+                    className="rounded-xl border border-border bg-foreground/[0.03] px-3 py-2 text-[13px] text-foreground"
+                  >
+                    <option value="">Todo el Perú</option>
+                    {[...(data?.dep ?? [])]
+                      .sort((a, b) => a.name.localeCompare(b.name, "es"))
+                      .map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name}
+                        </option>
+                      ))}
+                  </select>
+                </Field>
+                <Field label="Nombres">
+                  <Segmented
+                    value={namesAll ? "todos" : "algunos"}
+                    options={[
+                      ["algunos", "Los grandes"],
+                      ["todos", "Todos"],
+                    ]}
+                    onChange={(v) => {
+                      if (v === "todos" && !canNameAll) {
+                        choose({
+                          view: "ordenado",
+                          level:
+                            sel.level === "dist" && !sel.dep
+                              ? "prov"
+                              : sel.level,
+                        });
+                      }
+                      setAllNames(v === "todos");
+                    }}
+                  />
+                </Field>
+                <Field label="Otros criterios">
+                  <div className="flex flex-wrap gap-1.5">
+                    {MORE_CHIPS.map(([m, label]) => (
+                      <Chip
+                        key={m}
+                        on={sel.metric === m}
+                        onClick={() => choose({ metric: m, view: "ordenado" })}
+                      >
+                        {label}
+                      </Chip>
+                    ))}
+                  </div>
+                </Field>
+              </div>
+            </details>
           </div>
 
           {data && ranked.length > 0 && (
@@ -563,7 +588,7 @@ function PlaceCard({
     : `${shape.name}${shape.gentilicio ? ` (${shape.gentilicio})` : ""}: ${fig.big} ${fig.unit}. Mira el tuyo en Quipu:`;
   const level = shape.id.length === 2 ? "dep" : shape.id.length === 4 ? "prov" : "dist";
   return (
-    <div className="glass glass-border animate-in order-2 flex flex-col gap-3 rounded-3xl p-4 lg:order-none">
+    <div className="glass glass-border animate-in order-2 flex flex-col gap-3 rounded-3xl p-4 max-lg:glass-solid max-lg:fixed max-lg:inset-x-2 max-lg:bottom-2 max-lg:z-50 max-lg:max-h-[72dvh] max-lg:overflow-y-auto max-lg:shadow-2xl lg:order-none">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[10.5px] tracking-[0.06em] text-muted-foreground uppercase">
@@ -638,6 +663,41 @@ function PlaceCard({
         url={url}
       />
     </div>
+  );
+}
+
+const CHIPS: [Metric, string][] = [
+  ["quipu", "Gasto"],
+  ["cobertura", "Señal 4G"],
+  ["emergencias", "Emergencias"],
+  ["zonas", "Zonas críticas"],
+  ["digital", "Digital"],
+  ["area", "Tamaño"],
+];
+const MORE_CHIPS: [Metric, string][] = [
+  ["inversion", "Presupuesto 2024"],
+  ["ejecucion", "Gasto 2024"],
+  ["ornato", "Plazas y monumentos"],
+];
+
+function Chip({
+  on,
+  onClick,
+  children,
+}: {
+  on: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      className="rounded-full border border-border px-3 py-1.5 text-[12.5px] transition hover:border-foreground/30 aria-pressed:border-transparent aria-pressed:bg-foreground aria-pressed:text-background"
+    >
+      {children}
+    </button>
   );
 }
 
