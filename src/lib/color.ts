@@ -1,34 +1,10 @@
 import { type Metric, type Shape, value } from "@/lib/shapes";
 
-// Macro-regions get a hue family, departments a step inside it (north wine, center blue,
-// south amber, east green, Lima and Callao slate), so neighbours stay distinguishable.
-const DEP: Record<string, [number, number, number]> = {
-  "24": [0.6, 0.14, 5],
-  "20": [0.52, 0.15, 0],
-  "14": [0.66, 0.12, 15],
-  "13": [0.48, 0.14, 355],
-  "06": [0.58, 0.16, 350],
-  "01": [0.44, 0.12, 5],
-  "02": [0.62, 0.13, 345],
-  "10": [0.62, 0.11, 230],
-  "19": [0.5, 0.1, 225],
-  "12": [0.7, 0.1, 220],
-  "09": [0.56, 0.12, 240],
-  "05": [0.78, 0.07, 225],
-  "11": [0.82, 0.08, 75],
-  "04": [0.74, 0.12, 60],
-  "18": [0.6, 0.13, 40],
-  "23": [0.8, 0.09, 50],
-  "21": [0.66, 0.13, 35],
-  "08": [0.7, 0.12, 50],
-  "03": [0.62, 0.11, 30],
-  "16": [0.76, 0.16, 145],
-  "25": [0.82, 0.08, 140],
-  "17": [0.74, 0.1, 115],
-  "22": [0.66, 0.12, 155],
-  "15": [0.45, 0.01, 60],
-  "07": [0.62, 0.02, 60],
-};
+/** The one ramp: pale sand → deep terracotta. Every sequential scale in Quipu is this ramp. */
+export function terracotta(t: number): string {
+  const x = Math.max(0, Math.min(1, t));
+  return `oklch(${(0.84 - 0.32 * x).toFixed(3)} ${(0.05 + 0.11 * x).toFixed(3)} ${(75 - 40 * x).toFixed(1)})`;
+}
 
 const hash = (s: string) => {
   let h = 0;
@@ -36,47 +12,37 @@ const hash = (s: string) => {
   return ((h >>> 0) % 1000) / 1000;
 };
 
+/** Size view: no data to encode, so warm paper tones that only tell neighbours apart. */
 export function departmentColor(shape: Shape, jitter: boolean): string {
-  const [l, c, h] = DEP[shape.dep] ?? [0.6, 0.02, 60];
+  const n = Number.parseInt(shape.dep, 10) || 0;
+  const l = 0.6 + ((n * 37) % 7) * 0.035;
+  const c = 0.05 + ((n * 13) % 5) * 0.013;
+  const h = 40 + ((n * 17) % 50);
   const dl = jitter ? (hash(shape.id) - 0.5) * 0.1 : 0;
-  return `oklch(${(l + dl).toFixed(3)} ${c} ${h})`;
+  return `oklch(${(l + dl).toFixed(3)} ${c.toFixed(3)} ${h})`;
 }
 
 export const NO_DATA = "oklch(0.6 0.005 60 / 0.35)";
 
-/** Execution ratio 0..1 on a red → amber → green ramp. */
-export function executionColor(r: number): string {
-  const t = Math.max(0, Math.min(1, r));
-  const h = 25 + t * 125;
-  const l = 0.58 + Math.sin(t * Math.PI) * 0.14;
-  return `oklch(${l.toFixed(3)} 0.15 ${h.toFixed(1)})`;
-}
+/** Execution ratio 0..1. */
+export const executionColor = (r: number) => terracotta(r);
 
-/** Budget in soles on a log ramp from pale to deep teal. */
+/** Budget in soles on a log scale. */
 export function budgetColor(pim: number, min: number, max: number): string {
-  const t = Math.max(0, Math.min(1, Math.log(pim / min) / Math.log(max / min)));
-  return `oklch(${(0.86 - t * 0.44).toFixed(3)} ${(0.04 + t * 0.1).toFixed(3)} 200)`;
+  return terracotta(Math.log(pim / min) / Math.log(max / min));
 }
 
-/** Ornament share on a sand → deep magenta ramp; 30% and above saturates. */
-export function ornatoColor(r: number): string {
-  const t = Math.max(0, Math.min(1, r / 0.3));
-  return `oklch(${(0.88 - t * 0.42).toFixed(3)} ${(0.03 + t * 0.16).toFixed(3)} ${(80 - t * 85).toFixed(1)})`;
-}
+/** Ornament share; 30% and above saturates. */
+export const ornatoColor = (r: number) => terracotta(r / 0.3);
 
-/** Cobertura 4G: 0 → pálido, 50% o más de los centros poblados → azul intenso. */
-export const coverageColor = (r: number) =>
-  digitalColor(20 + Math.min(r / 0.5, 1) * 50);
+/** Cobertura 4G: 50% or more of the populated centers saturates. */
+export const coverageColor = (r: number) => terracotta(r / 0.5);
 
-/** Escala cálida (arena → magenta) para conteos: `full` o más satura. */
-export const countColor = (v: number, full: number) =>
-  ornatoColor((Math.min(v / full, 1) * 0.3));
+/** Counts: `full` or more saturates. */
+export const countColor = (v: number, full: number) => terracotta(v / full);
 
-/** muniscan index on a slate → electric blue ramp over 20–70, where nearly every score falls. */
-export function digitalColor(v: number): string {
-  const t = Math.max(0, Math.min(1, (v - 20) / 50));
-  return `oklch(${(0.82 - t * 0.3).toFixed(3)} ${(0.02 + t * 0.17).toFixed(3)} 255)`;
-}
+/** muniscan index over 20–70, where nearly every score falls. */
+export const digitalColor = (v: number) => terracotta((v - 20) / 50);
 
 /**
  * Avance of the year on a pale → deep terracotta ramp, stretched between the 5th and 95th percentile
@@ -85,8 +51,7 @@ export function digitalColor(v: number): string {
  */
 export function quipuColor(r: number, [lo, hi]: [number, number]): string {
   const t = Math.max(0, Math.min(1, hi > lo ? (r - lo) / (hi - lo) : 0.5));
-  // Lightness stays in the middle band (0.84 → 0.52) so both ends read on paper and on the dark theme.
-  return `oklch(${(0.84 - 0.32 * t).toFixed(3)} ${(0.05 + 0.11 * t).toFixed(3)} ${(75 - 40 * t).toFixed(1)})`;
+  return terracotta(t);
 }
 
 /** Color range for a metric over a set of shapes: percentiles of the ratio for quipu, PIM min/max otherwise. */

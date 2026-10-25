@@ -224,7 +224,7 @@ export function Explorer() {
         </p>
         <p
           key={title}
-          className="animate-in text-[10.5px] font-medium tracking-[0.08em] text-muted-foreground uppercase"
+          className="text-[10.5px] font-medium tracking-[0.08em] text-muted-foreground uppercase"
         >
           {title}
         </p>
@@ -334,15 +334,17 @@ export function Explorer() {
       <SiteHeader about={<AboutDialog sources={data?.sources} />} />
       <main className="grid flex-1 gap-4 lg:min-h-0 lg:flex-none px-3 pb-3 sm:px-5 lg:h-[calc(100dvh-3.75rem)] lg:grid-cols-[minmax(20rem,23rem)_1fr] lg:grid-rows-[minmax(0,1fr)]">
         <aside className="contents lg:flex lg:min-h-0 lg:flex-col lg:gap-5 lg:overflow-y-auto lg:pt-8 lg:pr-1">
-          <div className="animate-in relative z-40 order-first pt-3 lg:pt-0">
+          <div className="relative z-40 order-first pt-3 lg:pt-0">
             <h1 className="font-display text-5xl leading-[0.95] tracking-[-0.02em] sm:text-6xl">
               Qui<em className="font-light">pu</em>
             </h1>
-            <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
-              ¿De qué distrito eres? Mira cuánto gastó en obras, su cobertura
-              4G y sus emergencias.
-            </p>
-            {headline && (
+            {!pickShape && (
+              <p className="mt-3 max-w-sm text-[14px] leading-relaxed text-muted-foreground">
+                ¿De qué distrito eres? Mira cuánto gastó en obras, su cobertura
+                4G y sus emergencias.
+              </p>
+            )}
+            {headline && !pickShape && (
               <div className="mt-5 max-w-sm">
                 <p className="flex items-baseline gap-2.5">
                   <span className="font-display text-[64px] leading-none tracking-[-0.03em] text-accent">
@@ -390,15 +392,18 @@ export function Explorer() {
           )}
 
           <div className="glass glass-border order-2 flex flex-col gap-4 rounded-3xl p-4 lg:order-none">
-            <Field label="Vista">
-              <Segmented
-                value={sel.view}
-                options={[
-                  ["mapa", "Mapa"],
-                  ["ordenado", "Ordenado"],
-                ]}
-                onChange={(view) => choose({ view })}
-              />
+            <Field label="¿Qué quieres ver?">
+              <div className="flex flex-wrap gap-1.5">
+                {CHIPS.map(([m, label]) => (
+                  <Chip
+                    key={m}
+                    on={sel.metric === m}
+                    onClick={() => choose({ metric: m, view: "ordenado" })}
+                  >
+                    {label}
+                  </Chip>
+                ))}
+              </div>
             </Field>
             <Field label="Nivel">
               <Segmented
@@ -411,61 +416,11 @@ export function Explorer() {
                 onChange={(level) => choose({ level })}
               />
             </Field>
-            <Field label="Departamento">
-              <select
-                value={sel.dep ?? ""}
-                onChange={(e) => choose({ dep: e.target.value || undefined })}
-                className="rounded-xl border border-border bg-foreground/[0.03] px-3 py-2 text-[13px] text-foreground"
-              >
-                <option value="">Todo el Perú</option>
-                {[...(data?.dep ?? [])]
-                  .sort((a, b) => a.name.localeCompare(b.name, "es"))
-                  .map((d) => (
-                    <option key={d.id} value={d.id}>
-                      {d.name}
-                    </option>
-                  ))}
-              </select>
-            </Field>
-            <Field label="Nombres">
-              <Segmented
-                value={namesAll ? "todos" : "algunos"}
-                options={[
-                  ["algunos", "Los grandes"],
-                  ["todos", "Todos"],
-                ]}
-                onChange={(v) => {
-                  if (v === "todos" && !canNameAll) {
-                    choose({ view: "ordenado", level: sel.level === "dist" && !sel.dep ? "prov" : sel.level });
-                  }
-                  setAllNames(v === "todos");
-                }}
-              />
-            </Field>
-            <Field label="Ordenar y colorear por">
-              <div className="flex flex-col gap-1.5">
-                {(Object.keys(METRICS) as Metric[]).map((m) => (
-                  <button
-                    key={m}
-                    type="button"
-                    onClick={() => choose({ metric: m, view: "ordenado" })}
-                    aria-pressed={sel.metric === m}
-                    className="flex items-center justify-between rounded-xl border border-border px-3 py-2 text-left text-[13px] transition hover:border-foreground/20 aria-pressed:border-accent/50 aria-pressed:bg-accent/10"
-                  >
-                    <span>{METRICS[m].label}</span>
-                    <span className="text-[11px] text-muted-foreground">
-                      {SOURCE[m]}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </Field>
             <Legend metric={sel.metric} shapes={shapes} />
-            <Field label="Cómo leerlo">
-              <p className="text-[12.5px] leading-relaxed text-muted-foreground">
-                {guide(sel.metric, sel.level)}
-              </p>
-            </Field>
+            <p className="text-[12.5px] leading-relaxed text-muted-foreground">
+              {guide(sel.metric, sel.level)}{" "}
+              <span className="text-[11px]">Fuente: {SOURCE[sel.metric]}.</span>
+            </p>
             <div className="flex gap-2">
               <button
                 type="button"
@@ -474,14 +429,84 @@ export function Explorer() {
               >
                 {step === null ? (
                   <>
-                    <PlayIcon /> Ver la historia
+                    <PlayIcon /> Recorrido de 1 min
                   </>
                 ) : (
-                  "Salir de la historia"
+                  "Salir del recorrido"
                 )}
               </button>
               <ShareButton title={title} />
             </div>
+            <details className="group border-t border-border pt-3">
+              <summary className="flex cursor-pointer list-none items-center justify-between text-[12px] text-muted-foreground transition hover:text-foreground">
+                Más opciones
+                <span className="transition group-open:rotate-45">+</span>
+              </summary>
+              <div className="mt-3 flex flex-col gap-4">
+                <Field label="Vista">
+                  <Segmented
+                    value={sel.view}
+                    options={[
+                      ["mapa", "Mapa"],
+                      ["ordenado", "Ordenado"],
+                    ]}
+                    onChange={(view) => choose({ view })}
+                  />
+                </Field>
+                <Field label="Departamento">
+                  <select
+                    value={sel.dep ?? ""}
+                    onChange={(e) =>
+                      choose({ dep: e.target.value || undefined })
+                    }
+                    className="rounded-xl border border-border bg-foreground/[0.03] px-3 py-2 text-[13px] text-foreground"
+                  >
+                    <option value="">Todo el Perú</option>
+                    {[...(data?.dep ?? [])]
+                      .sort((a, b) => a.name.localeCompare(b.name, "es"))
+                      .map((d) => (
+                        <option key={d.id} value={d.id}>
+                          {d.name}
+                        </option>
+                      ))}
+                  </select>
+                </Field>
+                <Field label="Nombres">
+                  <Segmented
+                    value={namesAll ? "todos" : "algunos"}
+                    options={[
+                      ["algunos", "Los grandes"],
+                      ["todos", "Todos"],
+                    ]}
+                    onChange={(v) => {
+                      if (v === "todos" && !canNameAll) {
+                        choose({
+                          view: "ordenado",
+                          level:
+                            sel.level === "dist" && !sel.dep
+                              ? "prov"
+                              : sel.level,
+                        });
+                      }
+                      setAllNames(v === "todos");
+                    }}
+                  />
+                </Field>
+                <Field label="Otros criterios">
+                  <div className="flex flex-wrap gap-1.5">
+                    {MORE_CHIPS.map(([m, label]) => (
+                      <Chip
+                        key={m}
+                        on={sel.metric === m}
+                        onClick={() => choose({ metric: m, view: "ordenado" })}
+                      >
+                        {label}
+                      </Chip>
+                    ))}
+                  </div>
+                </Field>
+              </div>
+            </details>
           </div>
 
           {data && ranked.length > 0 && (
@@ -563,7 +588,7 @@ function PlaceCard({
     : `${shape.name}${shape.gentilicio ? ` (${shape.gentilicio})` : ""}: ${fig.big} ${fig.unit}. Mira el tuyo en Quipu:`;
   const level = shape.id.length === 2 ? "dep" : shape.id.length === 4 ? "prov" : "dist";
   return (
-    <div className="glass glass-border animate-in order-2 flex flex-col gap-3 rounded-3xl p-4 lg:order-none">
+    <div className="glass glass-border animate-in order-2 flex flex-col gap-3 rounded-3xl p-4 max-lg:glass-solid max-lg:fixed max-lg:inset-x-2 max-lg:bottom-2 max-lg:z-50 max-lg:max-h-[72dvh] max-lg:overflow-y-auto max-lg:shadow-2xl lg:order-none">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-[10.5px] tracking-[0.06em] text-muted-foreground uppercase">
@@ -641,6 +666,41 @@ function PlaceCard({
   );
 }
 
+const CHIPS: [Metric, string][] = [
+  ["quipu", "Gasto"],
+  ["cobertura", "Señal 4G"],
+  ["emergencias", "Emergencias"],
+  ["zonas", "Zonas críticas"],
+  ["digital", "Digital"],
+  ["area", "Tamaño"],
+];
+const MORE_CHIPS: [Metric, string][] = [
+  ["inversion", "Presupuesto 2024"],
+  ["ejecucion", "Gasto 2024"],
+  ["ornato", "Plazas y monumentos"],
+];
+
+function Chip({
+  on,
+  onClick,
+  children,
+}: {
+  on: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={on}
+      className="rounded-full border border-border px-3 py-1.5 text-[12.5px] transition hover:border-foreground/30 aria-pressed:border-transparent aria-pressed:bg-foreground aria-pressed:text-background"
+    >
+      {children}
+    </button>
+  );
+}
+
 const levelOf = (id: string): Level =>
   id.length === 2 ? "dep" : id.length === 4 ? "prov" : "dist";
 
@@ -677,8 +737,8 @@ function StoryCard({
   onDone: () => void;
 }) {
   const s = steps[index];
-  // Motion takes ~2 s; then enough time to read the caption.
-  const ms = 2600 + (s.title.length + s.body.length) * 32;
+  // Motion takes ~1 s; then just enough time to read the caption.
+  const ms = 1800 + (s.title.length + s.body.length) * 18;
   useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") onGo(Math.min(index + 1, steps.length - 1));
@@ -1057,7 +1117,7 @@ function sentence(shape: Shape, metric: Metric): string | undefined {
     case "ornato":
       return `${de100(v)} de cada 100 soles de sus obras 2024 fueron para plazas, parques, arcos o monumentos.`;
     case "digital":
-      return `Su municipalidad saca ${v} de 100 en servicios digitales.`;
+      return `Su municipalidad tiene ${v} puntos de 100 en servicios digitales.`;
     case "cobertura":
       return `${de100(v)} de cada 100 centros poblados (pueblos y caseríos) tienen señal 4G.`;
     case "emergencias":

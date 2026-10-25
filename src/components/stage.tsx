@@ -43,8 +43,8 @@ type Item = {
 };
 
 const ease = (t: number) => 1 - (1 - t) ** 4;
-const DUR = 1300;
-const STAGGER = 700;
+const DUR = 800;
+const STAGGER = 350;
 
 /** Shapes ordered for the sorted view: highest value first, shapes without data last. */
 export function sortShapes(shapes: Shape[], metric: Metric): Shape[] {
@@ -247,6 +247,7 @@ export function Stage({
       const font = styles.getPropertyValue("--font-inter") || "sans-serif";
       const ink = styles.getPropertyValue("--label-strong");
       const muted = styles.getPropertyValue("--label");
+      const paper = styles.getPropertyValue("--background");
       const labels: Item[] = [];
       const callouts: Item[] = [];
       for (const it of items.current.values()) {
@@ -276,18 +277,30 @@ export function Stage({
         ctx.globalAlpha = a * (it.sure.from + (it.sure.to - it.sure.from) * t);
         ctx.fillStyle = mixOklch(it.color.from, it.color.to, t);
         ctx.fill(it.path);
+        if (it.level !== "dist") {
+          ctx.lineWidth = 0.7 / s;
+          ctx.strokeStyle = paper;
+          ctx.stroke(it.path);
+        }
         const hl =
           it.level === state.current.level &&
           highlighted.current.has(it.shape.id);
         if (hl && t > 0.6) {
           ctx.globalAlpha = Math.min(1, (t - 0.6) / 0.3) * a;
-          ctx.lineWidth = 2.5 / s;
+          ctx.lineWidth = 1.4 / s;
           ctx.strokeStyle = ink;
           ctx.stroke(it.path);
           callouts.push(it);
         }
         if (hovered.current === it.key) {
-          ctx.lineWidth = 2 / s;
+          ctx.save();
+          ctx.shadowColor = "rgba(60, 40, 20, 0.35)";
+          ctx.shadowBlur = 16 * dpr;
+          ctx.shadowOffsetY = 4 * dpr;
+          ctx.fillStyle = mixOklch(it.color.from, it.color.to, t);
+          ctx.fill(it.path);
+          ctx.restore();
+          ctx.lineWidth = 1.2 / s;
           ctx.strokeStyle = ink;
           ctx.stroke(it.path);
         }

@@ -53,7 +53,7 @@ export function buildStory(data: Dataset): Step[] {
       sel: { level: "dep", view: "mapa", metric: "area" },
       kicker: "El punto de partida",
       title: `El Perú, en ${count(data.dep.length)} piezas`,
-      body: "Cada color es un departamento. Mira dónde está cada uno, porque en un momento todos van a salir de su lugar.",
+      body: "Cada color es un departamento. Mira dónde está cada uno: ya se mueven.",
       highlight: [],
     },
     {
@@ -74,14 +74,14 @@ export function buildStory(data: Dataset): Step[] {
       sel: { level: "dist", view: "ordenado", metric: "area" },
       kicker: "Hasta el último distrito",
       title: `${count(data.dist.length)} distritos`,
-      body: `De ${dists[0].name} (${km2(dists[0].area)}) a ${dists[dists.length - 1].name} (${km2(dists[dists.length - 1].area)}). Cada uno tiene su municipalidad y su presupuesto.`,
+      body: `De ${dists[0].name} (${km2(dists[0].area)}) a ${dists[dists.length - 1].name} (${km2(dists[dists.length - 1].area)}).`,
       highlight: [dists[0].id, dists[dists.length - 1].id],
     },
     {
       sel: { level: "dep", view: "ordenado", metric: "ejecucion" },
       kicker: "Otra pregunta",
       title: "¿Cuánto de su inversión gastaron?",
-      body: `En 2024 las municipalidades ejecutaron ${pct(totalDev / totalPim)} de su presupuesto de inversión. Verde gastó casi todo, rojo dejó plata sin usar. ${depExec[0].name} va primero con ${pct(value(depExec[0], "ejecucion") ?? 0)}.`,
+      body: `En 2024 las municipalidades ejecutaron ${pct(totalDev / totalPim)} de su presupuesto de inversión. Más oscuro, más gastó. ${depExec[0].name} va primero con ${pct(value(depExec[0], "ejecucion") ?? 0)}.`,
       highlight: [depExec[0].id, depExec[depExec.length - 1].id],
     },
     {
@@ -95,14 +95,14 @@ export function buildStory(data: Dataset): Step[] {
       sel: { level: "dist", view: "ordenado", metric: "ornato" },
       kicker: "¿Y en qué?",
       title: `${pct(ornato / totalPim)} se fue a plazas, parques y arcos`,
-      body: `Jev, un modelo de evaluación, leyó el nombre de cada proyecto. En ${distOrn[0].name}, ${pct(value(distOrn[0], "ornato") ?? 0)} de la inversión fue ornato. Las formas tenues son las que Jev no pudo clasificar con seguridad (${pct(unsure / totalPim)} del total).`,
+      body: `Leímos el nombre de cada proyecto. En ${distOrn[0].name}, ${pct(value(distOrn[0], "ornato") ?? 0)} de la inversión fue ornato. Las formas tenues no pudimos clasificarlas con seguridad.`,
       highlight: [distOrn[0].id],
     },
     {
       sel: { level: "dep", view: "mapa", metric: "digital" },
       kicker: "De vuelta al mapa",
       title: "El mismo país, otra lectura",
-      body: `Ahora coloreado por superficie digital: cuánto sistema propio declaran sus municipalidades. ${depDigital[0].name} lidera. Elige un criterio y explóralo tú.`,
+      body: `Ahora coloreado por superficie digital: cuánto sistema propio declaran sus municipalidades. ${depDigital[0].name} lidera. Ahora elige tú.`,
       highlight: [depDigital[0].id],
     },
   ];
