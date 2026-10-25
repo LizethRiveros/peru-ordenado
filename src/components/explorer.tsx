@@ -328,16 +328,23 @@ export function Explorer() {
               Cambia la pregunta y mira quién queda arriba.
             </p>
             {headline && (
-              <p className="mt-4 max-w-sm font-display text-[21px] leading-snug">
-                Los municipios de {depName ?? "todo el Perú"} ya gastaron{" "}
-                <span className="text-accent">{headline.here}</span> soles de los
-                que tienen para obras este año.
-                {depName && headline.all ? (
-                  <span className="block text-[13px] text-muted-foreground">
-                    El país en conjunto: {headline.all}.
+              <div className="mt-5 max-w-sm">
+                <p className="flex items-baseline gap-2.5">
+                  <span className="font-display text-[64px] leading-none tracking-[-0.03em] text-accent">
+                    {headline.here.match(/^\d+/)?.[0]}
                   </span>
-                ) : null}
-              </p>
+                  <span className="text-[15px] text-foreground">
+                    de cada 100 soles
+                  </span>
+                </p>
+                <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
+                  ya se gastaron en obras de los municipios de{" "}
+                  {depName ?? "todo el Perú"} este año.
+                  {depName && headline.all
+                    ? ` En el país: ${headline.all.replace(" de cada 100", "")}.`
+                    : ""}
+                </p>
+              </div>
             )}
             <div className="mt-4 max-w-sm">
               <PlaceFinder data={data} names={names} onPick={goToPlace} />

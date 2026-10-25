@@ -316,25 +316,43 @@ export function Stage({
         ctx.font = `400 9px ${font}`;
         ctx.fillText(valueLabel(it.shape, m), x, bottom + LABEL_H - 3, w);
       }
+      // Callouts: no box. A hairline leader ends in a dot on the shape; the name in the serif,
+      // the figure in the accent, both haloed with the page color so they read over any fill.
       const surface = styles.getPropertyValue("--surface");
+      const accent = styles.getPropertyValue("--accent");
+      const serif = styles.getPropertyValue("--font-fraunces") || "Georgia, serif";
+      ctx.lineJoin = "round";
       for (const it of callouts) {
         const { x, y, s, a } = it.cur;
         const top = y - ((it.shape.bbox[3] - it.shape.bbox[1]) * s) / 2;
-        const text = `${it.shape.name} · ${valueLabel(it.shape, m)}`;
-        ctx.font = `500 12px ${font}`;
-        const w = ctx.measureText(text).width + 20;
-        const px = Math.min(Math.max(x, w / 2 + 6), size.current.w - w / 2 - 6);
-        const py = Math.max(top - 16, 14);
+        const name = it.shape.name;
+        const figure = valueLabel(it.shape, m);
+        ctx.font = `400 17px ${serif}, Georgia, serif`;
+        const w = Math.max(ctx.measureText(name).width, 60);
+        const px = Math.min(Math.max(x, w / 2 + 8), size.current.w - w / 2 - 8);
+        const py = Math.max(top - 38, 20);
         ctx.globalAlpha = a;
-        ctx.fillStyle = surface;
-        ctx.beginPath();
-        ctx.roundRect(px - w / 2, py - 12, w, 24, 12);
-        ctx.fill();
-        ctx.lineWidth = 1;
         ctx.strokeStyle = ink;
-        ctx.stroke();
         ctx.fillStyle = ink;
-        ctx.fillText(text, px, py + 4);
+        ctx.lineWidth = 1;
+        ctx.globalAlpha = a * 0.55;
+        ctx.beginPath();
+        ctx.moveTo(x, py + 18);
+        ctx.lineTo(x, top + 3);
+        ctx.stroke();
+        ctx.globalAlpha = a;
+        ctx.beginPath();
+        ctx.arc(x, top + 3, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = surface;
+        ctx.strokeText(name, px, py);
+        ctx.fillStyle = ink;
+        ctx.fillText(name, px, py);
+        ctx.font = `500 11px ${font}`;
+        ctx.strokeText(figure, px, py + 15);
+        ctx.fillStyle = accent;
+        ctx.fillText(figure, px, py + 15);
       }
       ctx.globalAlpha = 1;
     };
