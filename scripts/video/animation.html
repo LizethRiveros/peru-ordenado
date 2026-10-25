@@ -79,7 +79,7 @@ const $ = (id) => document.getElementById(id);
 const NS = "http://www.w3.org/2000/svg";
 const ACC = "#b5522b";
 // Colorful map: a warm-to-cool set of clear colors, one per neighbour, like a printed atlas.
-const PAL = ["#58d68d", "#f5a24a", "#ef6b8f", "#45c4f0", "#b185eb", "#ffd166", "#2ec4b6", "#ff7f50", "#9bd04b", "#5b8def", "#e8646a", "#c75cb0"];
+const PAL = ["#c8607a", "#a39d94", "#e8829a", "#5f9fb8", "#8fd0ee", "#f0b08a", "#bfe3f5", "#ffe0b8", "#d9856a", "#f2a7b8", "#d9566e", "#9bc79b"];
 const PAL_OLD = ["#7fc8a0", "#e8a05a", "#e0736e", "#6fb0d8", "#c79be0", "#f0cf6a", "#5fb7b0", "#d98aa8", "#9bc65a", "#e58a4f", "#8e9ce0", "#c9b38a"];
 const hash = (s) => { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) | 0; return Math.abs(h); };
 const pal = (i, id) => PAL[(i * 5 + hash(id)) % PAL.length];
