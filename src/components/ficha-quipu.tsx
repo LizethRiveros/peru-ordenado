@@ -3,7 +3,7 @@ import type { FichaRow } from "@/lib/ficha";
 const X0 = 28;
 const STEP = 61;
 const TOP = 12;
-const MAX = 108;
+const MAX = 96;
 
 /** A place as a quipu: one cord with a thread per layer; the longer the thread, the higher the place ranks. */
 export function FichaQuipu({ rows }: { rows: FichaRow[] }) {
