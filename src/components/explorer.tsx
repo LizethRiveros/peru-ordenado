@@ -26,8 +26,9 @@ import {
   NO_DATA,
   ornatoColor,
   quipuColor,
+  terracotta,
 } from "@/lib/color";
-import { count, km2, pct, soles } from "@/lib/format";
+import { count, densidad, habitantes, km2, pct, soles } from "@/lib/format";
 import {
   parseSelection,
   type Selection,
@@ -640,6 +641,12 @@ function PlaceCard({
               {shape.gentilicio}
             </p>
           )}
+          {shape.pob !== undefined && (
+            <p className="mt-1 text-[12px] text-muted-foreground">
+              {habitantes(shape.pob)} · {densidad(shape.pob / shape.area)}
+              <span className="text-muted-foreground/70"> (INEI, 2025)</span>
+            </p>
+          )}
         </div>
         <button
           type="button"
@@ -735,6 +742,8 @@ const CHIPS: [Metric, string][] = [
   ["emergencias", "Emergencias"],
   ["zonas", "Zonas críticas"],
   ["digital", "Digital"],
+  ["poblacion", "Población"],
+  ["densidad", "Densidad"],
   ["area", "Tamaño"],
 ];
 const MORE_CHIPS: [Metric, string][] = [
@@ -1042,6 +1051,8 @@ const UNIT: Partial<Record<Metric, string>> = {
   emergencias: "Estados de emergencia declarados, 2017-2024",
   zonas: "Zonas críticas por derrumbes y huaicos",
   digital: "Presencia digital, de 0 a 100 puntos",
+  poblacion: "Habitantes (proyección INEI 2025)",
+  densidad: "Habitantes por kilómetro cuadrado (proyección 2025)",
 };
 
 function Legend({ metric, shapes }: { metric: Metric; shapes: Shape[] }) {
@@ -1095,6 +1106,22 @@ function Legend({ metric, shapes }: { metric: Metric; shapes: Shape[] }) {
       lo: "0 zonas",
       hi: "6 o más",
     },
+    poblacion: (() => {
+      const r = rangeFor(shapes, "poblacion");
+      return {
+        colors: stops.map((t) => terracotta(t)),
+        lo: `${count(Math.round(r[0]))} o menos`,
+        hi: `${count(Math.round(r[1]))} o más`,
+      };
+    })(),
+    densidad: (() => {
+      const r = rangeFor(shapes, "densidad");
+      return {
+        colors: stops.map((t) => terracotta(t)),
+        lo: `${densidad(r[0])} o menos`,
+        hi: `${densidad(r[1])} o más`,
+      };
+    })(),
     digital: (() => {
       const r = rangeFor(shapes, "digital");
       return {
@@ -1180,6 +1207,10 @@ const de100 = (r: number) => Math.round(r * 100);
 function sentence(shape: Shape, metric: Metric): string | undefined {
   const v = value(shape, metric);
   if (metric === "area") return `Mide ${km2(shape.area)}.`;
+  if (metric === "poblacion" && v !== undefined)
+    return `Viven ${count(v)} personas, según la proyección del INEI para 2025. Es una estimación, no el conteo del censo.`;
+  if (metric === "densidad" && v !== undefined)
+    return `Hay ${densidad(v)}: ${count(shape.pob ?? 0)} personas en ${km2(shape.area)}.`;
   if (v === undefined) return undefined;
   switch (metric) {
     case "inversion":
@@ -1235,6 +1266,12 @@ function countryText(data: Dataset, metric: Metric): string | undefined {
       return share(sum((s) => s.terr?.cp4g ?? 0), sum((s) => s.terr?.cp ?? 0));
     case "ornato":
       return share(sum((s) => s.mix?.ornato ?? 0), sum((s) => (s.mix ? (s.inv?.pim ?? 0) : 0)));
+    case "poblacion":
+      return `${count(sum((s) => s.pob ?? 0))} habitantes`;
+    case "densidad": {
+      const a = sum((s) => s.area);
+      return a > 0 ? densidad(sum((s) => s.pob ?? 0) / a) : undefined;
+    }
     case "emergencias": {
       const n = sum((s) => s.terr?.emergN ?? 0);
       return n ? `${(sum((s) => s.terr?.emerg ?? 0) / n).toFixed(1)} decretos por distrito` : undefined;

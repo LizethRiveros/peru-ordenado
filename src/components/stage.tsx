@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { colorFor, mixOklch, type Oklch, parseOklch, rangeFor } from "@/lib/color";
-import { km2, pct, soles } from "@/lib/format";
+import { count, habitantes, km2, pct, soles } from "@/lib/format";
 import {
   type Box,
   gridLayout,
@@ -55,6 +55,12 @@ export function sortShapes(shapes: Shape[], metric: Metric): Shape[] {
 
 export function valueLabel(shape: Shape, metric: Metric): string {
   if (metric === "area") return km2(shape.area);
+  if (metric === "poblacion")
+    return shape.pob === undefined ? "sin datos" : habitantes(shape.pob);
+  if (metric === "densidad") {
+    const d = value(shape, metric);
+    return d === undefined ? "sin datos" : `${d < 10 ? d.toFixed(1) : count(d)} hab/km²`;
+  }
   if (metric === "digital")
     return shape.digital === undefined ? "sin datos" : `${shape.digital}/100`;
   if (metric === "ornato" || metric === "quipu" || metric === "cobertura") {
