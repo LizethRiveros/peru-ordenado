@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AboutDialog } from "@/components/about-dialog";
 import { SiteHeader } from "@/components/site-header";
-import { Stage, sortShapes, type View, valueLabel } from "@/components/stage";
+import { Stage, sortShapes, valueLabel } from "@/components/stage";
 import {
   budgetColor,
   digitalColor,
@@ -12,6 +12,7 @@ import {
   ornatoColor,
 } from "@/lib/color";
 import { count, km2, pct, soles } from "@/lib/format";
+import { parseSelection, type Selection } from "@/lib/selection";
 import {
   certainty,
   type Dataset,
@@ -24,7 +25,6 @@ import {
   value,
 } from "@/lib/shapes";
 
-type Selection = { level: Level; view: View; metric: Metric };
 type Hit = { shape: Shape; level: Level; x: number; y: number };
 
 const TOUR: Partial<Selection>[] = [
@@ -37,22 +37,6 @@ const TOUR: Partial<Selection>[] = [
   { level: "dep", view: "mapa" },
 ];
 const TOUR_STEP = 3200;
-
-function readUrl(): Partial<Selection> & { video?: boolean } {
-  const q = new URLSearchParams(window.location.search);
-  const level = q.get("nivel");
-  const view = q.get("vista");
-  const metric = q.get("orden");
-  return {
-    level:
-      level === "prov" || level === "dist" || level === "dep"
-        ? level
-        : undefined,
-    view: view === "mapa" || view === "ordenado" ? view : undefined,
-    metric: metric && metric in METRICS ? (metric as Metric) : undefined,
-    video: q.has("video"),
-  };
-}
 
 export function Explorer() {
   const [data, setData] = useState<Dataset | null>(null);
@@ -68,7 +52,9 @@ export function Explorer() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const { video: v, ...rest } = readUrl();
+    const q = new URLSearchParams(window.location.search);
+    const rest = parseSelection(q);
+    const v = q.has("video");
     setSel((s) => ({
       ...s,
       ...Object.fromEntries(Object.entries(rest).filter(([, x]) => x)),
@@ -255,13 +241,16 @@ export function Explorer() {
               </div>
             </Field>
             <Legend metric={sel.metric} shapes={shapes} />
-            <button
-              type="button"
-              onClick={() => (touring ? stopTour() : startTour(false))}
-              className="flex items-center justify-center gap-2 rounded-xl bg-foreground px-3 py-2.5 text-[13px] font-medium text-background transition hover:opacity-90"
-            >
-              {touring ? "Detener recorrido" : "Reproducir recorrido"}
-            </button>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => (touring ? stopTour() : startTour(false))}
+                className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-foreground px-3 py-2.5 text-[13px] font-medium text-background transition hover:opacity-90"
+              >
+                {touring ? "Detener recorrido" : "Reproducir recorrido"}
+              </button>
+              <ShareButton title={title} />
+            </div>
           </div>
 
           {data && ranked.length > 0 && (
@@ -289,6 +278,30 @@ export function Explorer() {
         {stage}
       </main>
     </div>
+  );
+}
+
+function ShareButton({ title }: { title: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        const url = window.location.href;
+        if (navigator.share) {
+          await navigator
+            .share({ title: "Perú, ordenado", text: title, url })
+            .catch(() => {});
+          return;
+        }
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 1600);
+      }}
+      className="rounded-xl border border-border px-3 py-2.5 text-[13px] transition hover:border-foreground/20"
+    >
+      {copied ? "Copiado" : "Compartir"}
+    </button>
   );
 }
 

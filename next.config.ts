@@ -2,6 +2,10 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // The OG route reads the dataset and fonts with fs, which file tracing cannot see.
+  outputFileTracingIncludes: {
+    "/og": ["./public/data/shapes.json", "./src/assets/*.ttf"],
+  },
   headers: async () => [
     {
       source: "/:path*",

@@ -10,6 +10,7 @@ import {
   mapLayout,
   type Place,
 } from "@/lib/layout";
+import type { View } from "@/lib/selection";
 import {
   certainty,
   type Dataset,
@@ -20,7 +21,7 @@ import {
   value,
 } from "@/lib/shapes";
 
-export type View = "mapa" | "ordenado";
+export type { View };
 
 type Frame = Place & { a: number };
 type Item = {

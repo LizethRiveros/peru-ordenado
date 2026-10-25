@@ -42,3 +42,11 @@ test("grid layout keeps relative size and stays inside the box", () => {
   }
   expect(big?.y).toBeLessThan(small?.y ?? 0);
 });
+
+test("oklch converts to the expected sRGB", async () => {
+  const { toRgb } = await import("@/lib/color");
+  expect(toRgb("oklch(1 0 0)")).toBe("rgb(255,255,255)");
+  expect(toRgb("oklch(0 0 0)")).toBe("rgb(0,0,0)");
+  // oklch(0.628 0.2577 29.23) is sRGB red
+  expect(toRgb("oklch(0.628 0.2577 29.23)")).toBe("rgb(255,0,0)");
+});
