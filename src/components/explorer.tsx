@@ -675,8 +675,9 @@ function PlaceCard({
       )}
       <FichaQuipu rows={rows} />
       <p className="-mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
-        {rankText ? `${rankText}. ` : ""}Cada hilo es más largo cuanto más
-        arriba queda frente a los demás {LEVELS[level].plural}.
+        {rankText ? `${rankText}. ` : ""}El largo del hilo no es el número: es
+        el puesto entre los {LEVELS[level].plural} (más largo, mejor puesto). El
+        número de abajo es el dato real.
       </p>
       <details className="group -mt-1 text-[11.5px] leading-relaxed text-muted-foreground">
         <summary className="cursor-pointer list-none transition hover:text-foreground">
@@ -687,7 +688,7 @@ function PlaceCard({
           <li><b className="font-medium text-foreground/80">Señal 4G:</b> de sus pueblos y caseríos, cuántos tienen señal 4G de celular. Cuenta lugares, no personas.</li>
           <li><b className="font-medium text-foreground/80">Emergencias:</b> veces que el Gobierno declaró estado de emergencia entre 2017 y 2024.</li>
           <li><b className="font-medium text-foreground/80">Zonas críticas:</b> zonas con peligro de derrumbes, huaicos o deslizamientos (INGEMMET).</li>
-          <li><b className="font-medium text-foreground/80">Digital:</b> puntos de 0 a 100 de presencia digital de su municipalidad en gob.pe.</li>
+          <li><b className="font-medium text-foreground/80">Presencia digital:</b> puntos de 0 a 100 que miden qué tan presente está su municipalidad en internet (gob.pe: página, trámites en línea). Más puntos, más presencia.</li>
         </ul>
       </details>
       {other ? (
